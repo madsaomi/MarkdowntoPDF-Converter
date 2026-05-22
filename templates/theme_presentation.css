@@ -1,0 +1,205 @@
+/* Google Fonts: Support for elegant Outfit, Inter, and Noto characters */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;600&family=Noto+Sans:wght@400;700&family=Noto+Color+Emoji&display=swap');
+
+@page {
+    size: A4 landscape;
+    margin: 0;
+}
+
+:root {
+    --text-color: #f1f5f9;
+    --heading-color: #fbbf24;
+    --subheading-color: #38bdf8;
+    --code-bg: rgba(15, 23, 42, 0.6);
+}
+
+.slide {
+    width: 297mm;
+    height: 210mm;
+    page-break-after: always;
+    box-sizing: border-box;
+    padding: 2.2cm 2.5cm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+    color: var(--text-color);
+    position: relative;
+    font-family: 'Outfit', 'Inter', 'Noto Sans', sans-serif;
+    overflow: hidden;
+}
+
+/* Header & Footer decorations */
+.slide::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+}
+
+.slide-decor-top {
+    position: absolute;
+    top: 1cm;
+    right: 1.5cm;
+    font-size: 10pt;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Slide Typography */
+.slide h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 34pt;
+    font-weight: 800;
+    color: var(--heading-color);
+    margin-top: 0;
+    margin-bottom: 0.4em;
+    line-height: 1.25;
+    border: none;
+    letter-spacing: -0.02em;
+    width: 100%;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.35);
+}
+
+.slide h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 24pt;
+    font-weight: 600;
+    color: var(--subheading-color);
+    margin-top: 0;
+    margin-bottom: 0.5em;
+    line-height: 1.3;
+    border: none;
+    width: 100%;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+.slide h3, .slide h4, .slide h5, .slide h6 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 18pt;
+    font-weight: 600;
+    color: #a855f7;
+    margin-top: 0;
+    margin-bottom: 0.4em;
+}
+
+.slide p, .slide li {
+    font-family: 'Inter', 'Noto Sans', sans-serif;
+    font-size: 15pt;
+    line-height: 1.6;
+    color: #e2e8f0;
+    margin-bottom: 0.5em;
+}
+
+.slide ul, .slide ol {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    padding-left: 1.8em;
+    width: 100%;
+}
+
+.slide li {
+    margin-bottom: 0.4em;
+}
+
+.slide a {
+    color: #38bdf8;
+    text-decoration: none;
+    border-bottom: 1px dashed #38bdf8;
+}
+
+/* Premium Blockquotes */
+.slide blockquote {
+    margin: 0.8em 0;
+    padding: 0.8em 1.2em;
+    border-left: 5px solid #a855f7;
+    background: rgba(168, 85, 247, 0.08);
+    border-radius: 0 8px 8px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.slide blockquote p {
+    font-size: 14pt;
+    font-style: italic;
+    color: #e9d5ff;
+    margin-bottom: 0;
+}
+
+/* Custom code styling */
+.slide pre, .slide .codehilite {
+    background: var(--code-bg) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px;
+    padding: 0.8em 1.2em;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: Consolas, Monaco, 'Courier New', monospace;
+    font-size: 11pt;
+    margin: 0.8em 0;
+}
+
+.slide code {
+    font-family: Consolas, Monaco, 'Courier New', monospace;
+    background: var(--code-bg);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #38bdf8;
+}
+
+.slide pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+}
+
+/* Diagrams centering and custom shadows */
+.slide .diagram-plantuml,
+.slide .diagram-mermaid,
+.slide .diagram-graphviz,
+.slide .diagram-dot,
+.slide .diagram-ditaa,
+.slide .diagram-c4 {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 15px;
+    box-sizing: border-box;
+    display: inline-block;
+    max-width: 100%;
+    text-align: center;
+    margin: 1em 0;
+}
+
+.slide img {
+    max-width: 100%;
+    max-height: 115mm;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Tables styling in presentations */
+.slide table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.8em 0;
+    font-size: 13pt;
+}
+
+.slide th, .slide td {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.slide th {
+    background: rgba(56, 189, 248, 0.1);
+    color: #38bdf8;
+    font-weight: bold;
+}

@@ -1,0 +1,175 @@
+/* Google Noto Fonts: Support for English, Russian, Chinese, Japanese, Korean, and Emojis */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Serif+SC&family=Noto+Serif+TC&family=Noto+Serif+JP&family=Noto+Serif+KR&family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+@page {
+    size: A4;
+    margin: 2.5cm;
+    @bottom-center {
+        content: counter(page);
+        font-family: "Noto Serif", serif;
+        font-size: 10pt;
+        color: #333;
+    }
+}
+
+:root {
+    --text-color: #222222;
+    --heading-color: #000000;
+    --link-color: #7f8c8d;
+    --border-color: #dddddd;
+    --code-bg: #f4f4f4;
+    --blockquote-border: #999999;
+    --blockquote-bg: #fdfdfd;
+}
+
+body {
+    font-family: "Noto Serif", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", "Noto Color Emoji", serif;
+    color: var(--text-color);
+    line-height: 1.5;
+    font-size: 12pt;
+    text-align: justify;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Noto Serif", serif;
+    color: var(--heading-color);
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: bold;
+}
+
+h1 {
+    font-size: 24pt;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.2em;
+    text-align: center;
+}
+
+h2 {
+    font-size: 18pt;
+}
+
+p {
+    margin-bottom: 1.2em;
+    text-indent: 1.5em;
+}
+
+a {
+    color: var(--link-color);
+    text-decoration: underline;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5em;
+}
+
+th, td {
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #f9f9f9;
+}
+
+/* Blockquotes */
+blockquote {
+    margin: 1.5em 2em;
+    padding: 0.5em 1em;
+    border-left: 3px solid var(--blockquote-border);
+    background-color: var(--blockquote-bg);
+    font-style: italic;
+}
+
+blockquote p {
+    text-indent: 0;
+}
+
+/* Code Blocks */
+pre, .codehilite {
+    background-color: var(--code-bg);
+    padding: 1em;
+    border: 1px solid var(--border-color);
+    font-family: monospace;
+    font-size: 10pt;
+    page-break-inside: avoid;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    word-wrap: break-word !important;
+    overflow: hidden !important;
+}
+
+code {
+    background-color: var(--code-bg);
+    padding: 0.1em 0.3em;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+pre code, .codehilite code {
+    background-color: transparent;
+    padding: 0;
+}
+
+/* Images */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Table of Contents (TOC) with Dot Leaders */
+.toc {
+    background-color: var(--code-bg);
+    border: 1px solid var(--border-color);
+    padding: 1.5em;
+    margin-bottom: 2.5em;
+}
+
+.toc::before {
+    content: "Содержание / Table of Contents";
+    display: block;
+    font-family: "Noto Serif", serif;
+    font-size: 1.4em;
+    font-weight: bold;
+    color: var(--heading-color);
+    text-align: center;
+    margin-bottom: 1.2em;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.4em;
+}
+
+.toc ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.toc li {
+    margin-bottom: 0.5em;
+    font-family: "Noto Serif", serif;
+    font-size: 11pt;
+}
+
+.toc li ul {
+    padding-left: 1.5em;
+    margin-top: 0.4em;
+}
+
+.toc a {
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.toc a::after {
+    content: " " leader('.') " " target-counter(attr(href), page);
+    color: #555555;
+    font-size: 10pt;
+    font-weight: normal;
+}
+

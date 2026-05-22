@@ -1,0 +1,10 @@
+PyQt6
+Markdown==3.5.2
+pymdown-extensions==10.7
+Jinja2==3.1.3
+WeasyPrint==61.2
+Pygments==2.17.2
+pyinstaller
+python-docx>=1.1.0
+htmldocx>=0.0.6
+pypdf>=4.0.0

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ meta.title | e if meta.title else "Document" }}</title>
+    {% if meta.author %}<meta name="author" content="{{ meta.author | e }}">{% endif %}
+    {% if meta.title %}<meta name="description" content="{{ meta.title | e }}">{% endif %}
+    <style>
+        {{ doc_theme_css }}
+        {{ code_theme_css }}
+        {{ custom_css }}
+    </style>
+    <style>
+        /* Dynamic paper size */
+        @page {
+            size: {{ paper_size | default('A4') }};
+            {% if margins %}
+            margin: {{ margins }};
+            {% endif %}
+            {% if footer_text %}
+            @bottom-center {
+                content: "{{ footer_text }}";
+                font-family: "Noto Sans", sans-serif;
+                font-size: 8pt;
+                color: #999;
+            }
+            {% endif %}
+            {% if page_numbers %}
+            @bottom-right {
+                {% if page_num_format == 'slash' %}
+                content: counter(page) " / " counter(pages);
+                {% elif page_num_format == 'text' %}
+                content: "{{ tr_page | default('Page') }} " counter(page) " {{ tr_of | default('of') }} " counter(pages);
+                {% else %}
+                content: counter(page);
+                {% endif %}
+                font-family: "Noto Sans", sans-serif;
+                font-size: 8pt;
+                color: #999;
+            }
+            {% endif %}
+        }
+
+        {% if page_numbers %}
+        @page:first {
+            @bottom-right {
+                content: normal;
+            }
+        }
+        {% endif %}
+
+        /* Page break safeguards */
+        table, tr, img, blockquote, pre, .admonition {
+            page-break-inside: avoid;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid;
+        }
+
+        /* PDF Outlines/Bookmarks */
+        h1 { bookmark-level: 1; }
+        h2 { bookmark-level: 2; }
+        h3 { bookmark-level: 3; }
+        h4 { bookmark-level: 4; }
+        h5 { bookmark-level: 5; }
+        h6 { bookmark-level: 6; }
+
+        /* LaTeX Math Equations */
+        img.math-latex {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        img.math-latex-inline {
+            display: inline-block;
+            vertical-align: middle;
+            margin: 0 0.15em;
+            height: 1.15em;
+            width: auto;
+        }
+        div.math-latex-block {
+            text-align: center;
+            margin: 1.5em 0;
+            page-break-inside: avoid;
+        }
+        div.math-latex-block img.math-latex {
+            max-width: 90%;
+            height: auto;
+        }
+
+        /* Watermark */
+        {% if watermark %}
+        .watermark {
+            position: fixed;
+            top: 35%;
+            left: 10%;
+            font-size: 80pt;
+            color: rgba(200, 200, 200, 0.25);
+            transform: rotate(-45deg);
+            z-index: -1;
+            font-family: "Noto Sans", sans-serif;
+            font-weight: bold;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        {% endif %}
+    </style>
+</head>
+<body>
+    {% if watermark %}
+    <div class="watermark">{{ watermark | e }}</div>
+    {% endif %}
+
+    {% if meta.title %}
+    <div style="page-break-after: always; display: flex; flex-direction: column; justify-content: center; height: 80vh; text-align: center;">
+        <h1 style="border: none; font-size: 36pt; margin-bottom: 0.5em; padding-bottom: 0;">{{ meta.title | e }}</h1>
+        {% if meta.author %}<h2 style="color: #555; margin-top: 0; font-size: 20pt; border: none;">{{ meta.author | e }}</h2>{% endif %}
+        {% if meta.date %}<h3 style="color: #777; font-weight: normal; margin-top: 1em;">{{ meta.date | e }}</h3>{% endif %}
+    </div>
+    {% endif %}
+    
+    <div class="content">
+        {{ content }}
+    </div>
+</body>
+</html>

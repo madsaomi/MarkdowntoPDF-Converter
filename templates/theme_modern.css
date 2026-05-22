@@ -1,0 +1,195 @@
+/* Google Noto Fonts: Support for English, Russian, Chinese, Japanese, Korean, and Emojis */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans+SC&family=Noto+Sans+TC&family=Noto+Sans+JP&family=Noto+Sans+KR&family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+@page {
+    size: A4;
+    margin: 2cm;
+    @bottom-right {
+        content: counter(page);
+        font-family: "Noto Sans", sans-serif;
+        font-size: 9pt;
+        color: #7f8c8d;
+    }
+    @bottom-left {
+        content: string(doctitle);
+        font-family: "Noto Sans", sans-serif;
+        font-size: 9pt;
+        color: #7f8c8d;
+    }
+}
+
+:root {
+    --text-color: #2c3e50;
+    --heading-color: #1a252f;
+    --link-color: #2980b9;
+    --border-color: #ecf0f1;
+    --code-bg: #f8f9fa;
+    --blockquote-border: #3498db;
+    --blockquote-bg: #f5fcff;
+}
+
+body {
+    font-family: "Noto Sans", "Noto Sans SC", "Noto Sans JP", "Noto Sans KR", "Noto Color Emoji", sans-serif;
+    color: var(--text-color);
+    line-height: 1.6;
+    font-size: 11pt;
+}
+
+h1 {
+    font-family: "Noto Sans", sans-serif;
+    color: var(--heading-color);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.3em;
+    string-set: doctitle content();
+}
+
+h2, h3, h4, h5, h6 {
+    font-family: "Noto Sans", sans-serif;
+    color: var(--heading-color);
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+}
+
+h2 {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.3em;
+}
+
+p {
+    margin-bottom: 1em;
+}
+
+a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5em;
+}
+
+th, td {
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #fcfcfc;
+    font-weight: bold;
+}
+
+/* Blockquotes */
+blockquote {
+    margin: 1.5em 0;
+    padding: 0.5em 1em;
+    border-left: 4px solid var(--blockquote-border);
+    background-color: var(--blockquote-bg);
+    color: #555;
+}
+
+blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+/* Code Blocks */
+pre, .codehilite {
+    background-color: var(--code-bg);
+    padding: 1em;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    font-family: monospace;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    word-wrap: break-word !important;
+    overflow: hidden !important;
+}
+
+code {
+    background-color: var(--code-bg);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+pre code, .codehilite code {
+    background-color: transparent;
+    padding: 0;
+}
+
+/* Task lists */
+ul.task-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+ul.task-list li input[type="checkbox"] {
+    margin-right: 0.5em;
+}
+
+/* Images */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Table of Contents (TOC) with Dot Leaders */
+.toc {
+    background-color: var(--code-bg);
+    border: 1px solid var(--border-color);
+    padding: 1.5em;
+    border-radius: 4px;
+    margin-bottom: 2.5em;
+}
+
+.toc::before {
+    content: "Содержание / Table of Contents";
+    display: block;
+    font-family: "Noto Sans", sans-serif;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: var(--heading-color);
+    margin-bottom: 1em;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5em;
+}
+
+.toc ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.toc li {
+    margin-bottom: 0.6em;
+    font-family: "Noto Sans", sans-serif;
+    font-size: 10.5pt;
+}
+
+.toc li ul {
+    padding-left: 1.5em;
+    margin-top: 0.4em;
+}
+
+.toc a {
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.toc a::after {
+    content: " " leader('.') " " target-counter(attr(href), page);
+    color: #95a5a6;
+    font-size: 9.5pt;
+    font-weight: normal;
+}
+
