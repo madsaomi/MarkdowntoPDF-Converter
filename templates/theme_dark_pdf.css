@@ -1,0 +1,81 @@
+/* Dark theme for PDF output */
+body {
+    background-color: #1e1e2e !important;
+    color: #cdd6f4 !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #cba6f7 !important;
+}
+
+a {
+    color: #89b4fa !important;
+}
+
+code {
+    background-color: #313244 !important;
+    color: #a6e3a1 !important;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+pre {
+    background-color: #313244 !important;
+    color: #cdd6f4 !important;
+    border: 1px solid #45475a;
+    border-radius: 5px;
+    padding: 12px;
+}
+
+pre code {
+    background-color: transparent !important;
+    color: #cdd6f4 !important;
+}
+
+blockquote {
+    border-left: 4px solid #cba6f7 !important;
+    color: #a6adc8 !important;
+    background-color: #313244 !important;
+    padding: 8px 16px;
+    margin: 12px 0;
+}
+
+table {
+    border-color: #45475a !important;
+}
+
+th {
+    background-color: #313244 !important;
+    color: #cba6f7 !important;
+    border-color: #45475a !important;
+}
+
+td {
+    border-color: #45475a !important;
+    color: #cdd6f4 !important;
+}
+
+tr:nth-child(even) {
+    background-color: #313244 !important;
+}
+
+img {
+    opacity: 0.9;
+}
+
+hr {
+    border-color: #45475a !important;
+}
+
+strong {
+    color: #f38ba8 !important;
+}
+
+em {
+    color: #f9e2af !important;
+}
+
+/* Watermark for dark theme */
+.watermark {
+    color: rgba(200, 200, 200, 0.15) !important;
+}

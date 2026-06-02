@@ -5,6 +5,11 @@ class ExportFormat(str, Enum):
     PDF = "PDF"
     DOCX = "DOCX"
     HTML = "HTML"
+    EPUB = "EPUB"
+    PNG = "PNG"
+    JPG = "JPG"
+    PPTX = "PPTX"
+    REVEAL = "REVEAL"
 
 class DocTheme(str, Enum):
     MODERN = "theme_modern.css"
@@ -29,3 +34,4 @@ class ConversionOptions:
     page_numbers: bool = False
     page_num_format: str = "simple"
     is_presentation: bool = False
+    compress: bool = False

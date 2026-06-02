@@ -2,22 +2,17 @@ import os
 import sys
 import argparse
 from PyQt6.QtWidgets import QApplication
+from src.config import AppConfig
 from src.gui.main_window import MainWindow, LIGHT_STYLE
 from src.core.parser import MarkdownParser
 from src.core.renderer import PDFRenderer
 from src.core.docx_renderer import DOCXRenderer
+from src.core.pdf_encrypt import encrypt_pdf
 from src.__version__ import __version__
 
 
 def get_paths():
-    if getattr(sys, 'frozen', False):
-        base_path = sys._MEIPASS
-    else:
-        base_path = os.path.dirname(os.path.abspath(__file__))
-    
-    template_dir = os.path.join(base_path, 'templates')
-    wp_exe = os.path.join(base_path, 'weasyprint-windows', 'dist', 'weasyprint.exe')
-    return template_dir, wp_exe
+    return AppConfig.template_dir(), AppConfig.weasyprint_exe()
 
 
 def run_cli(args):
@@ -26,7 +21,7 @@ def run_cli(args):
     )
     parser.add_argument("input_files", nargs="+", help="Markdown (.md) files to convert")
     parser.add_argument("-o", "--output-dir", help="Output directory (defaults to input file's directory)")
-    parser.add_argument("-f", "--format", choices=["pdf", "docx", "html"], default="pdf", help="Output format (default: pdf)")
+    parser.add_argument("-f", "--format", choices=["pdf", "docx", "html", "epub", "png", "jpg", "pptx", "reveal"], default="pdf", help="Output format (default: pdf)")
     parser.add_argument("--theme", choices=["modern", "classic"], default="modern", help="Document theme (default: modern)")
     parser.add_argument("--code-theme", choices=["light", "dark"], default="light", help="Code highlights theme (default: light)")
     parser.add_argument("--paper", choices=["A4", "Letter", "Legal", "A3", "A5"], default="A4", help="Paper size (default: A4)")
@@ -97,6 +92,26 @@ def run_cli(args):
             if parsed.format == "docx":
                 renderer = DOCXRenderer()
                 renderer.render(html_content, metadata, out_file, reference_docx=parsed.docx_template, lang=parsed.lang)
+            elif parsed.format == "epub":
+                from src.core.epub_renderer import EPUBRenderer
+                renderer = EPUBRenderer()
+                renderer.render(html_content, metadata, out_file, lang=parsed.lang)
+            elif parsed.format in ("png", "jpg"):
+                from src.core.image_renderer import ImageRenderer
+                renderer = ImageRenderer(wp_executable)
+                doc_theme_css = PDFRenderer(template_dir, wp_executable)._read_css(doc_theme)
+                code_theme_css = PDFRenderer(template_dir, wp_executable)._read_css(code_theme)
+                count = renderer.render(
+                    html_content, metadata, out_file,
+                    doc_theme_css, code_theme_css,
+                    parsed.paper, parsed.lang, parsed.format
+                )
+                print(f"✅ Saved {count} image(s): {out_file}")
+            elif parsed.format == "pptx":
+                from src.core.pptx_renderer import PPTXRenderer
+                renderer = PPTXRenderer()
+                count = renderer.render(html_content, metadata, out_file, lang=parsed.lang)
+                print(f"✅ Saved {count} slides: {out_file}")
             elif parsed.format == "html":
                 renderer = PDFRenderer(template_dir, wp_executable)
                 rendered_html = renderer.render_html(
@@ -120,18 +135,10 @@ def run_cli(args):
                 
                 # Encrypt if password set
                 if parsed.password:
-                    try:
-                        from pypdf import PdfReader, PdfWriter
-                        reader = PdfReader(out_file)
-                        writer = PdfWriter()
-                        for page in reader.pages:
-                            writer.add_page(page)
-                        writer.encrypt(parsed.password)
-                        with open(out_file, "wb") as f:
-                            writer.write(f)
+                    if encrypt_pdf(out_file, parsed.password):
                         print("  Password encryption applied.")
-                    except Exception as e:
-                        print(f"  Warning: PDF Encryption failed: {e}", file=sys.stderr)
+                    else:
+                        print("  Warning: PDF Encryption failed.", file=sys.stderr)
                         
             print(f"  Saved to: {out_file}")
             

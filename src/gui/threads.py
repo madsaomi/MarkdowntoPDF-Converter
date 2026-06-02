@@ -6,6 +6,7 @@ from src.gui.models import ConversionOptions, ExportFormat
 from src.core.parser import MarkdownParser
 from src.core.renderer import PDFRenderer
 from src.core.docx_renderer import DOCXRenderer
+from src.core.pdf_encrypt import encrypt_pdf
 from src.gui.translations import TRANSLATIONS
 
 logger = logging.getLogger("MarkdownToPDF.threads")
@@ -88,6 +89,34 @@ class ConversionThread(QThread):
                 if opt.export_format == ExportFormat.DOCX:
                     renderer = DOCXRenderer()
                     renderer.render(html_content, metadata, output_file, reference_docx=opt.docx_template, lang=self.lang)
+                elif opt.export_format == ExportFormat.EPUB:
+                    from src.core.epub_renderer import EPUBRenderer
+                    renderer = EPUBRenderer()
+                    renderer.render(html_content, metadata, output_file, lang=self.lang)
+                elif opt.export_format == ExportFormat.PPTX:
+                    from src.core.pptx_renderer import PPTXRenderer
+                    renderer = PPTXRenderer()
+                    count = renderer.render(html_content, metadata, output_file, lang=self.lang)
+                    self.log.emit(t("log_saved", f"{output_file} ({count} slides)"))
+                elif opt.export_format == ExportFormat.REVEAL:
+                    from src.core.reveal_exporter import export_reveal_js
+                    count = export_reveal_js(html_content, metadata, output_file, lang=self.lang)
+                    self.log.emit(t("log_saved", f"{output_file} ({count} slides)"))
+                elif opt.export_format in (ExportFormat.PNG, ExportFormat.JPG):
+                    from src.core.image_renderer import ImageRenderer
+                    from src.core.renderer import PDFRenderer
+                    tmp_renderer = PDFRenderer(self.template_dir, self.wp_executable)
+                    doc_theme_css = tmp_renderer._read_css(doc_theme_file)
+                    code_theme_css = tmp_renderer._read_css(opt.code_theme)
+                    renderer = ImageRenderer(self.wp_executable)
+                    fmt = 'png' if opt.export_format == ExportFormat.PNG else 'jpg'
+                    count = renderer.render(
+                        html_content, metadata, output_file,
+                        doc_theme_css, code_theme_css,
+                        opt.paper_size, self.lang, fmt,
+                        cancel_flag=lambda: self._is_cancelled
+                    )
+                    self.log.emit(t("log_saved", f"{output_file} ({count} pages)"))
                 elif opt.export_format == ExportFormat.HTML:
                     # HTML export: render through Jinja2 template but save as .html
                     renderer = PDFRenderer(self.template_dir, self.wp_executable)
@@ -102,29 +131,23 @@ class ConversionThread(QThread):
                         f.write(rendered_html)
                 else:
                     renderer = PDFRenderer(self.template_dir, self.wp_executable)
+                    word_count = len(md_text.split())
                     renderer.render(
                         html_content, metadata, output_file,
                         doc_theme_file, opt.code_theme,
                         opt.paper_size, opt.watermark, opt.footer_text,
                         input_file, opt.custom_css, opt.margins,
                         page_numbers=opt.page_numbers, page_num_format=opt.page_num_format, lang=self.lang,
-                        cancel_flag=lambda: self._is_cancelled
+                        cancel_flag=lambda: self._is_cancelled,
+                        compress=opt.compress, word_count=word_count
                     )
                     
                     if opt.pdf_password and opt.export_format == ExportFormat.PDF:
-                        try:
-                            from pypdf import PdfReader, PdfWriter
-                            reader = PdfReader(output_file)
-                            writer = PdfWriter()
-                            for page in reader.pages:
-                                writer.add_page(page)
-                            writer.encrypt(opt.pdf_password)
-                            with open(output_file, "wb") as f:
-                                writer.write(f)
+                        if encrypt_pdf(output_file, opt.pdf_password):
                             self.log.emit(t("log_pdf_encrypted"))
-                        except Exception as e:
-                            self.log.emit(t("log_pdf_encrypt_error", str(e)))
-                            logger.error("Failed to encrypt PDF %s: %s", output_file, e)
+                        else:
+                            self.log.emit(t("log_pdf_encrypt_error", "Encryption failed"))
+                            logger.error("Failed to encrypt PDF %s", output_file)
 
                 self.log.emit(t("log_saved", output_file))
                 self.finished_one.emit(True, output_file)
@@ -198,6 +221,7 @@ class BookBuilderThread(QThread):
 
             self.log.emit("⚙️ Rendering PDF with WeasyPrint...")
             renderer = PDFRenderer(self.template_dir, self.wp_executable)
+            word_count = len(self.merged_md.split())
             
             renderer.render(
                 html_content, metadata, self.save_path,
@@ -206,22 +230,15 @@ class BookBuilderThread(QThread):
                 input_filepath=None, custom_css_path=self.custom_css, margins=self.margins,
                 page_numbers=self.page_numbers, page_num_format='simple',
                 lang=self.lang,
-                cancel_flag=lambda: self.is_cancelled()
+                cancel_flag=lambda: self.is_cancelled(),
+                word_count=word_count
             )
 
             if self.password:
-                try:
-                    from pypdf import PdfReader, PdfWriter
-                    reader = PdfReader(self.save_path)
-                    writer = PdfWriter()
-                    for page in reader.pages:
-                        writer.add_page(page)
-                    writer.encrypt(self.password)
-                    with open(self.save_path, "wb") as f:
-                        writer.write(f)
+                if encrypt_pdf(self.save_path, self.password):
                     self.log.emit(t("log_pdf_encrypted"))
-                except Exception as e:
-                    self.log.emit(t("log_pdf_encrypt_error", str(e)))
+                else:
+                    self.log.emit(t("log_pdf_encrypt_error", "Encryption failed"))
 
             self.log.emit(t("log_saved", self.save_path))
             self.finished_task.emit(True, self.save_path)

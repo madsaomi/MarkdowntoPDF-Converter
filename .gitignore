@@ -19,6 +19,9 @@ venv/
 env/
 ENV/
 
+# WeasyPrint portable engine (binary)
+weasyprint-windows/
+
 # OS generated files
 .DS_Store
 Thumbs.db
@@ -29,6 +32,11 @@ Thumbs.db
 *.exe
 *.zip
 
-# Ignore specific refactor scripts if any
-refactor.py
-refactor2.py
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log

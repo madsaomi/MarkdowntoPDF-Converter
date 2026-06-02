@@ -150,6 +150,7 @@ class MarkdownParser:
         Downloads external HTTP/HTTPS images and encodes them to Base64.
         Encodes local images found on disk to Base64.
         Replaces image src with Base64 data URIs.
+        Uses a file-based cache for downloaded images (7-day TTL).
         """
         import re
         import os
@@ -157,11 +158,53 @@ class MarkdownParser:
         import mimetypes
         import urllib.request
         import urllib.parse
+        import hashlib
+        import time
         import logging
         
         logger = logging.getLogger("MarkdownToPDF.Parser")
         
+        # Image cache directory
+        try:
+            from src.config import AppConfig
+            cache_dir = AppConfig.cache_dir()
+        except Exception:
+            cache_dir = os.path.join(os.getenv("APPDATA", "."), "MarkdownToPDF_Pro", "cache", "images")
+            os.makedirs(cache_dir, exist_ok=True)
+        
         img_pattern = re.compile(r'<img\s+([^>]*?)src=["\'](.*?)["\']([^>]*?)>', re.IGNORECASE)
+        
+        def get_cached_or_download(url: str) -> bytes:
+            """Download URL with file-based cache (7-day TTL)."""
+            url_hash = hashlib.md5(url.encode()).hexdigest()
+            cache_path = os.path.join(cache_dir, f"{url_hash}.bin")
+            
+            # Check cache
+            if os.path.exists(cache_path):
+                try:
+                    mtime = os.path.getmtime(cache_path)
+                    if (time.time() - mtime) < 7 * 86400:
+                        with open(cache_path, 'rb') as f:
+                            return f.read()
+                except Exception:
+                    pass
+            
+            # Download
+            req = urllib.request.Request(
+                url, 
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                data = response.read()
+            
+            # Save to cache
+            try:
+                with open(cache_path, 'wb') as f:
+                    f.write(data)
+            except Exception:
+                pass
+            
+            return data
         
         def get_base64_data_uri(path_or_url: str) -> str:
             if path_or_url.startswith('data:'):
@@ -172,17 +215,11 @@ class MarkdownParser:
                 content_type = 'image/png'
                 
             try:
-                # 1. Handle HTTP/HTTPS URLs
+                # 1. Handle HTTP/HTTPS URLs (with cache)
                 if path_or_url.startswith(('http://', 'https://')):
                     if not getattr(self, 'kroki_available', True):
                         return path_or_url
-                    req = urllib.request.Request(
-                        path_or_url, 
-                        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-                    )
-                    with urllib.request.urlopen(req, timeout=5) as response:
-                        img_data = response.read()
-                        
+                    img_data = get_cached_or_download(path_or_url)
                     encoded_data = base64.b64encode(img_data).decode('utf-8')
                     return f"data:{content_type};base64,{encoded_data}"
                     

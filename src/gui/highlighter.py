@@ -1,6 +1,13 @@
 import re
+import functools
 from PyQt6.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont, QColor
 from PyQt6.QtCore import QRegularExpression
+
+
+@functools.lru_cache(maxsize=20)
+def _compile_regex(pattern: str) -> QRegularExpression:
+    return QRegularExpression(pattern)
+
 
 class MarkdownHighlighter(QSyntaxHighlighter):
     def __init__(self, parent=None):
@@ -17,91 +24,57 @@ class MarkdownHighlighter(QSyntaxHighlighter):
     def _generate_rules(self):
         self.rules = []
 
-        # Define Colors based on theme
         if self.is_dark:
-            color_header = "#bb8fce"      # Violet
-            color_bold = "#f1c40f"        # Gold
-            color_italic = "#82e0aa"      # Pastel Green
-            color_code = "#e59866"        # Soft Orange
-            color_quote = "#a6acaf"       # Soft Gray
-            color_list = "#5dade2"        # Bright Blue
-            color_latex = "#48c9b0"       # Turquoise
-            color_mermaid = "#f48fb1"     # Soft Pink
-            color_link = "#1abc9c"        # Teal
+            color_header = "#bb8fce"
+            color_bold = "#f1c40f"
+            color_italic = "#82e0aa"
+            color_code = "#e59866"
+            color_quote = "#a6acaf"
+            color_list = "#5dade2"
+            color_latex = "#48c9b0"
+            color_mermaid = "#f48fb1"
+            color_link = "#1abc9c"
         else:
-            color_header = "#8e44ad"      # Deep Violet
-            color_bold = "#ba4a00"        # Dark Orange
-            color_italic = "#1e8449"      # Emerald Green
-            color_code = "#c0392b"        # Brick Red
-            color_quote = "#7f8c8d"       # Cool Gray
-            color_list = "#2980b9"        # Royal Blue
-            color_latex = "#117a65"       # Deep Teal
-            color_mermaid = "#c2185b"     # Raspberry
-            color_link = "#16a085"        # Teal
+            color_header = "#8e44ad"
+            color_bold = "#ba4a00"
+            color_italic = "#1e8449"
+            color_code = "#c0392b"
+            color_quote = "#7f8c8d"
+            color_list = "#2980b9"
+            color_latex = "#117a65"
+            color_mermaid = "#c2185b"
+            color_link = "#16a085"
 
-        # 1. Headers: # ... -> Bold
-        header_format = QTextCharFormat()
-        header_format.setFontWeight(QFont.Weight.Bold)
-        header_format.setForeground(QColor(color_header))
-        self.rules.append((QRegularExpression(r"^#{1,6}\s+.*$"), header_format))
+        def _fmt(color, bold=False, italic=False, underline=False, mono=False):
+            f = QTextCharFormat()
+            f.setForeground(QColor(color))
+            if bold:
+                f.setFontWeight(QFont.Weight.Bold)
+            if italic:
+                f.setFontItalic(True)
+            if underline:
+                f.setFontUnderline(True)
+            if mono:
+                f.setFontFamilies(["monospace", "Courier New"])
+            return f
 
-        # 2. Bold: **text** or __text__ -> Bold
-        bold_format = QTextCharFormat()
-        bold_format.setFontWeight(QFont.Weight.Bold)
-        bold_format.setForeground(QColor(color_bold))
-        self.rules.append((QRegularExpression(r"\*\*([^*]+)\*\*"), bold_format))
-        self.rules.append((QRegularExpression(r"__([^_]+)__"), bold_format))
-
-        # 3. Italic: *text* or _text_ -> Italic
-        italic_format = QTextCharFormat()
-        italic_format.setFontItalic(True)
-        italic_format.setForeground(QColor(color_italic))
-        self.rules.append((QRegularExpression(r"\*([^*]+)\*"), italic_format))
-        self.rules.append((QRegularExpression(r"_([^_]+)_"), italic_format))
-
-        # 4. Blockquotes: > quote -> Italic
-        quote_format = QTextCharFormat()
-        quote_format.setForeground(QColor(color_quote))
-        quote_format.setFontItalic(True)
-        self.rules.append((QRegularExpression(r"^>\s+.*$"), quote_format))
-
-        # 5. Unordered / Ordered lists -> Bold
-        list_format = QTextCharFormat()
-        list_format.setForeground(QColor(color_list))
-        list_format.setFontWeight(QFont.Weight.Bold)
-        self.rules.append((QRegularExpression(r"^\s*[-*+]\s+"), list_format))
-        self.rules.append((QRegularExpression(r"^\s*\d+\.\s+"), list_format))
-
-        # 6. Links and images: [text](link) or ![text](link) -> Underline
-        link_format = QTextCharFormat()
-        link_format.setForeground(QColor(color_link))
-        link_format.setFontUnderline(True)
-        self.rules.append((QRegularExpression(r"!?\[([^\]]+)\]\(([^)]+)\)"), link_format))
-
-        # 7. Inline LaTeX: $E=mc^2$ -> Turquoise
-        latex_format = QTextCharFormat()
-        latex_format.setForeground(QColor(color_latex))
-        self.rules.append((QRegularExpression(r"(?<!\$)\$(?!\s)[^\$\n]+(?<!\s)\$(?!\$)"), latex_format))
-
-        # 8. LaTeX Block: $$ ... $$ -> Turquoise
-        latex_block_format = QTextCharFormat()
-        latex_block_format.setForeground(QColor(color_latex))
-        latex_block_format.setFontWeight(QFont.Weight.Bold)
-        self.rules.append((QRegularExpression(r"\$\$.*?\$\$"), latex_block_format))
-        self.rules.append((QRegularExpression(r"^\s*\$\$\s*$"), latex_block_format))
-
-        # 9. Mermaid Blocks: ```mermaid ... ``` -> Pink
-        mermaid_format = QTextCharFormat()
-        mermaid_format.setForeground(QColor(color_mermaid))
-        mermaid_format.setFontWeight(QFont.Weight.Bold)
-        self.rules.append((QRegularExpression(r"```mermaid.*"), mermaid_format))
-        
-        # 10. Code blocks and Inline code: `code`
-        code_format = QTextCharFormat()
-        code_format.setFontFamilies(["monospace", "Courier New"])
-        code_format.setForeground(QColor(color_code))
-        self.rules.append((QRegularExpression(r"`([^`]+)`"), code_format))
-        self.rules.append((QRegularExpression(r"```[a-zA-Z0-9]*"), code_format))
+        self.rules = [
+            (_compile_regex(r"^#{1,6}\s+.*$"), _fmt(color_header, bold=True)),
+            (_compile_regex(r"\*\*([^*]+)\*\*"), _fmt(color_bold, bold=True)),
+            (_compile_regex(r"__([^_]+)__"), _fmt(color_bold, bold=True)),
+            (_compile_regex(r"\*([^*]+)\*"), _fmt(color_italic, italic=True)),
+            (_compile_regex(r"_([^_]+)_"), _fmt(color_italic, italic=True)),
+            (_compile_regex(r"^>\s+.*$"), _fmt(color_quote, italic=True)),
+            (_compile_regex(r"^\s*[-*+]\s+"), _fmt(color_list, bold=True)),
+            (_compile_regex(r"^\s*\d+\.\s+"), _fmt(color_list, bold=True)),
+            (_compile_regex(r"!?\[([^\]]+)\]\(([^)]+)\)"), _fmt(color_link, underline=True)),
+            (_compile_regex(r"(?<!\$)\$(?!\s)[^\$\n]+(?<!\s)\$(?!\$)"), _fmt(color_latex)),
+            (_compile_regex(r"\$\$.*?\$\$"), _fmt(color_latex, bold=True)),
+            (_compile_regex(r"^\s*\$\$\s*$"), _fmt(color_latex, bold=True)),
+            (_compile_regex(r"```mermaid.*"), _fmt(color_mermaid, bold=True)),
+            (_compile_regex(r"`([^`]+)`"), _fmt(color_code, mono=True)),
+            (_compile_regex(r"```[a-zA-Z0-9]*"), _fmt(color_code, mono=True)),
+        ]
 
     def highlightBlock(self, text):
         for expression, char_format in self.rules:

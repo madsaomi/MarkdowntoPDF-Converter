@@ -1,162 +1,187 @@
-# 📄 Markdown to PDF Converter Pro
+# Markdown to PDF Converter Pro
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
 ![PyQt6](https://img.shields.io/badge/GUI-PyQt6-green.svg)
 ![WeasyPrint](https://img.shields.io/badge/PDF_Engine-WeasyPrint-red.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-**Markdown to PDF Converter Pro** — это мощнейшее десктопное приложение и консольная утилита промышленного уровня для создания превосходно сверстанных, профессиональных документов, отчетов и книг из обычных Markdown-файлов.
+Desktop application for converting Markdown to PDF, DOCX, HTML, EPUB, PPTX, Reveal.js, PNG, JPG with live preview editor.
 
-Приложение спроектировано для обеспечения максимального качества верстки (издательского уровня), поддерживает **все языки мира** (включая CJK иероглифы, арабскую вязь и эмодзи без единого "квадратика") и предлагает потрясающий интерактивный пользовательский опыт.
+## Features
 
----
+### Editor
+- Split view: Markdown editor + live preview
+- Auto-update preview (500ms debounce)
+- Syntax highlighting (Markdown + code blocks)
+- Multi-cursor editing
+- Welcome guide on startup
 
-## ✨ Новые и Продвинутые Возможности (Pro-Версия)
+### Export Formats
+| Format | Engine | Notes |
+|--------|--------|-------|
+| PDF | WeasyPrint | Professional typography, CJK support |
+| DOCX | python-docx | With reference template support |
+| HTML | Built-in | Standalone HTML files |
+| EPUB | ebooklib | E-book format |
+| PPTX | python-pptx | PowerPoint presentations |
+| Reveal.js | Built-in | HTML presentations |
+| PNG/JPG | WeasyPrint | Image export |
 
-### ✍️ Живой Редактор и Раздельный Просмотр (Splitter View)
-- **Интерактивный двухпанельный режим**: Слева — удобный редактор разметки Markdown, справа — мгновенно обновляющийся живой предпросмотр!
-- **Авто-обновление (Debounced Rendering)**: Отрисовка происходит автоматически через 500мс после того, как вы закончили печатать, исключая лаги интерфейса при работе с большими документами.
-- **Интерактивное приветствие (Welcome Guide)**: При запуске автоматически предзагружается красивый интерактивный гид-инструкция, наглядно показывающий все фичи конвертера в реальном времени.
+### PDF Features
+- Page themes (modern, classic, presentation)
+- Code syntax highlighting (light/dark)
+- Custom CSS stylesheets
+- Watermark text
+- Custom footer with variables: `{date}`, `{filename}`, `{title}`, `{word_count}`, `{time}`
+- PDF encryption with password
+- Table of contents with dot leaders
 
-### 🌐 Динамическая Локализация (RU / EN)
-- **Переключение «на лету»**: Полная поддержка русского и английского языков прямо в меню программы. Весь интерфейс, диалоговые окна, сообщения об ошибках и журналы сборки переводятся мгновенно и без перезапуска!
-- **Язык инсталлятора**: Сам мастер установки автоматически подстраивается под язык вашей системы.
+### Tools
+- Markdown linter (12 rules)
+- Code snippets library
+- LaTeX formula preview
+- HTML to Markdown converter
+- Flashcard generator
+- Citation manager (BibTeX)
+- Auto-glossary
+- Quiz generator
+- TTS (text-to-speech) with 22 voices
+- OCR (image to text)
+- PDF to Markdown extraction
+- Wiki links + knowledge graph
+- Cloud templates fetcher
+- GitHub sync (init, commit, push, pull, log)
+- Drawing canvas (Excalidraw)
+- CSV/TSV editor
+- Calendar notes
+- Pomodoro timer
+- Watermark designer
 
-### 💾 Умный Менеджер Пресетов (Settings Presets)
-- **Сохранение профилей**: Настроили специфические поля страницы, выбрали тему, водяной знак, пароль и DOCX-шаблон? Сохраните этот профиль под уникальным именем (например, *«Корпоративный PDF»*)!
-- **Переключение в один клик**: Все параметры GUI моментально заполняются сохраненными значениями. Пресеты сохраняются в системе навсегда.
+### UI
+- Glassmorphism dark/light themes
+- Animated splash screen
+- Custom title bar
+- Toast notifications
+- About dialog
+- Feature tour
+- Ambient glow background
+- Zen mode
+- Keyboard shortcuts (Ctrl+/)
+- Drag & drop files
 
-### 🔒 PDF Защита и Шифрование
-- Задайте пароль в настройках — итоговый PDF будет надежно зашифрован 128-битным алгоритмом с помощью встроенного модуля `PyPDF2`. Никто не сможет открыть документ без пароля.
+### Internationalization
+- Russian and English interfaces
+- Switch language without restart
 
-### 📐 Кастомные Поля и CSS Стилизация
-- **Отступы страницы (Margins)**: Задавайте поля в любых CSS-единицах (например, `20mm 15mm 20mm 15mm`) прямо в настройках.
-- **Кастомный CSS**: Подключайте собственные файлы стилей для создания фирменных корпоративных документов.
+## Installation
 
-### 📖 Профессиональная Верстка Содержания (TOC)
-- **Точечные линии связи (Dot Leaders)**: Вставка тега `[TOC]` автоматически генерирует элегантное оглавление. Разделы и номера страниц идеально связываются аккуратными точками, согласно книжным стандартам!
-- **Авто-заголовок**: Стили сами добавляют красивую шапку *«Содержание / Table of Contents»*.
+### Requirements
+- Python 3.10+
+- Windows 10/11 (for bundled WeasyPrint)
 
-### 📂 Корпоративный Экспорт в Word (DOCX Reference Templates)
-- Конвертируйте Markdown в DOCX с использованием **референсного шаблона**. Достаточно указать файл `.docx` вашей компании, и выходной документ автоматически унаследует все фирменные стили, шрифты, размеры абзацев и заголовков!
-
----
-
-## 💻 Headless CLI Режим (Автоматизация)
-
-Если запустить программу в терминале с аргументами, она автоматически перейдет в высокопроизводительный **Headless CLI-режим** (без запуска PyQt6 GUI). Это позволяет использовать конвертер в автоматических скриптах, CI/CD-пайплайнах и batch-файлах!
-
-### Пример вызова:
+### Setup
 ```bash
-python main.py test.md -f pdf --theme modern -m "20mm 15mm" -p "секретный_пароль"
+git clone https://github.com/yourusername/markdown-to-pdf-converter.git
+cd markdown-to-pdf-converter
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
 ```
 
-### Доступные консольные параметры:
+## CLI Mode
 
-| Аргумент | Описание | Значения по умолчанию |
-| :--- | :--- | :--- |
-| `input_files ...` | Список исходных Markdown-файлов для конвертации (через пробел) | **Обязательно** |
-| `-o`, `--output-dir` | Папка сохранения результатов | Папка исходного файла |
-| `-f`, `--format` | Выходной формат документа | `pdf`, `docx`, `html` (по умолчанию: `pdf`) |
-| `--theme` | Общая тема оформления документа | `modern`, `classic` (по умолчанию: `modern`) |
-| `--code-theme` | Тема подсветки кода | `light`, `dark` (по умолчанию: `light`) |
-| `--paper` | Размер печатной страницы | `A4`, `Letter`, `Legal`, `A3`, `A5` (по умолчанию: `A4`) |
-| `-w`, `--watermark`| Полупрозрачный водяной знак наискосок | Отсутствует |
-| `--footer` | Пользовательский нижний колонтитул | Отсутствует |
-| `-m`, `--margins` | Поля страницы (например, `"20mm 15mm"`) | Из настроек темы |
-| `-p`, `--password` | Пароль для шифрования PDF-документа | Отсутствует |
-| `--docx-template` | Путь к референсному шаблону корпоративного `.docx` | Отсутствует |
-| `--custom-css` | Путь к собственному CSS-файлу | Отсутствует |
+Run without GUI for automation:
 
----
-
-## 📂 Структура проекта
-
-```text
-markdown-pdf-converter/
-├── assets/                     # Графические ресурсы и иконки
-│   ├── icon.png                
-│   └── icon.ico                
-├── templates/                  # Шаблоны оформления и таблицы стилей
-│   ├── base.html               # Общий HTML-каркас (титульный лист, водяные знаки)
-│   ├── theme_modern.css        # Современный стиль (sans-serif)
-│   ├── theme_classic.css       # Книжный строгий стиль (serif)
-│   ├── pygments.css            # Подсветка кода (светлая тема)
-│   └── pygments_dark.css       # Подсветка кода (тёмная тема)
-├── src/                        # Исходный код приложения
-│   ├── core/                   # Логика парсинга и рендеринга
-│   │   ├── parser.py           # Markdown-парсер с pymdown-расширениями
-│   │   ├── renderer.py         # Генератор PDF через WeasyPrint
-│   │   └── docx_renderer.py    # Экспорт в Word (.docx) с шаблонами стилей
-│   └── gui/                    # Графический интерфейс PyQt6
-│       ├── main_window.py      # Бизнес-логика главного окна и пресетов
-│       ├── ui_layout.py        # Графическая сетка виджетов и Live-редактора
-│       ├── translations.py     # Двуязычный словарь локализации (RU/EN)
-│       └── welcome_docs.py     # Интерактивное руководство при старте
-├── weasyprint-windows/         # Встроенный портативный движок WeasyPrint
-│   └── dist/
-│       └── weasyprint.exe
-├── main.py                     # Главная точка входа (GUI / CLI)
-├── build.py                    # Скрипт сборки автономного exe с авто-версионированием
-├── installer.iss               # Двуязычный скрипт Inno Setup для сборки дистрибутива
-├── requirements.txt            # Список зависимостей
-└── README.md
+```bash
+python main.py test.md -f pdf --theme modern -m "20mm 15mm" -p "password"
 ```
 
----
+| Argument | Description | Default |
+|----------|-------------|---------|
+| `input_files` | Markdown files to convert | Required |
+| `-o`, `--output-dir` | Output directory | Same as input |
+| `-f`, `--format` | Output format (pdf/docx/html/epub/pptx/png/jpg) | pdf |
+| `--theme` | Document theme (modern/classic) | modern |
+| `--code-theme` | Code highlighting (light/dark) | light |
+| `--paper` | Page size (A4/Letter/Legal/A3/A5) | A4 |
+| `-w`, `--watermark` | Watermark text | None |
+| `--footer` | Custom footer | None |
+| `-m`, `--margins` | Page margins (e.g. "20mm 15mm") | From theme |
+| `-p`, `--password` | PDF encryption password | None |
+| `--docx-template` | Reference DOCX template | None |
+| `--custom-css` | Custom CSS file | None |
 
-## 🚀 Установка и Запуск
+## Project Structure
 
-### Требования
-- Python 3.10 или выше.
-- Windows 10/11 (для использования встроенного Weasyprint-движка).
+```
+markdown-to-pdf-converter/
+├── assets/                  # Icons and images
+├── templates/               # HTML templates and CSS themes
+│   ├── base.html
+│   ├── theme_modern.css
+│   ├── theme_classic.css
+│   ├── theme_presentation.css
+│   ├── pygments.css
+│   └── pygments_dark.css
+├── src/
+│   ├── core/                # Business logic
+│   │   ├── parser.py        # Markdown parser
+│   │   ├── renderer.py      # PDF generator
+│   │   ├── docx_renderer.py # DOCX export
+│   │   ├── epub_renderer.py # EPUB export
+│   │   ├── pptx_renderer.py # PPTX export
+│   │   ├── image_renderer.py# PNG/JPG export
+│   │   ├── reveal_exporter.py# Reveal.js export
+│   │   ├── pdf_encrypt.py   # PDF encryption
+│   │   ├── pdf_to_markdown.py# PDF extraction
+│   │   ├── linter.py        # Markdown linter
+│   │   ├── snippets.py      # Code snippets
+│   │   ├── tts_engine.py    # Text-to-speech
+│   │   ├── ocr_engine.py    # OCR
+│   │   ├── ai_assistant.py  # Writing assistant
+│   │   ├── flashcards.py    # Flashcards
+│   │   ├── citation_manager.py# Citations
+│   │   ├── glossary.py      # Auto-glossary
+│   │   ├── quiz_generator.py# Quiz generator
+│   │   ├── latex_preview.py # LaTeX preview
+│   │   ├── html_to_markdown.py# HTML conversion
+│   │   ├── wikilinks.py     # Wiki links
+│   │   ├── cloud_templates.py# Cloud templates
+│   │   ├── github_sync.py   # Git operations
+│   │   ├── plugin_system.py # Plugin system
+│   │   ├── template_vars.py # Template variables
+│   │   ├── multi_export.py  # Batch export
+│   │   └── config.py        # App config
+│   └── gui/                 # PyQt6 interface
+│       ├── main_window.py   # Main window (494+ methods)
+│       ├── ui_layout.py     # UI layout
+│       ├── dialogs.py       # All dialogs
+│       ├── translations.py  # RU/EN localization
+│       ├── highlighter.py   # Syntax highlighting
+│       ├── models.py        # Data models
+│       ├── threads.py       # Background threads
+│       ├── toast.py         # Toast notifications
+│       └── ...              # 20+ GUI modules
+├── plugins/                 # User plugins
+├── weasyprint-windows/      # Bundled WeasyPrint
+├── main.py                  # Entry point
+├── build.py                 # Build script
+├── installer.iss            # Inno Setup installer
+├── requirements.txt
+└── LICENSE
+```
 
-### Пошаговая установка (для разработчиков):
+## Building
 
-1. **Клонируйте проект и перейдите в его директорию**:
-   ```bash
-   git clone https://github.com/yourusername/markdown-to-pdf-converter.git
-   cd markdown-to-pdf-converter
-   ```
-
-2. **Создайте и активируйте виртуальное окружение**:
-   ```bash
-   python -m venv venv
-   .\venv\Scripts\activate
-   ```
-
-3. **Установите все зависимости**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Запустите программу в GUI режиме**:
-   ```bash
-   python main.py
-   ```
-
----
-
-## 📦 Сборка и Дистрибуция
-
-### 1. Компиляция в Автономный `.exe`
-Вы можете собрать проект в один исполняемый переносимый файл, который не требует наличия Python на компьютере пользователя. Для этого запустите скрипт автоматической сборки:
+### Executable
 ```bash
 python build.py
 ```
-Скрипт автоматически:
-- Считает текущую версию программы из `src/__version__.py`.
-- Запишет эту версию в конфигурацию инсталлятора `installer.iss`.
-- Запустит `PyInstaller` со всеми необходимыми скрытыми импортами (`PyPDF2`, `translations` и т.д.).
-- Поместит готовую папку сборки в директорию `dist/MarkdownToPDF/`.
 
-### 2. Создание Мультиязычного Инсталлятора (Inno Setup)
-1. Откройте программу **Inno Setup Compiler**.
-2. Откройте файл `installer.iss`.
-3. Нажмите клавишу **F9** для запуска компиляции.
-4. Готовый установочный файл `dist/MarkdownToPDF_Setup.exe` будет собран автоматически. При установке он предложит выбрать язык интерфейса (Русский или English) и создаст ярлыки на рабочем столе и в меню Пуск.
+### Installer
+Open `installer.iss` in Inno Setup Compiler and press F9.
 
----
+## License
 
-## 📜 Лицензия
-Этот проект распространяется под свободной лицензией MIT. Подробности в файле LICENSE.
+MIT License - see [LICENSE](LICENSE) file.

@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import time
 import tempfile
 import subprocess
 from jinja2 import Environment, FileSystemLoader
@@ -29,7 +30,8 @@ class PDFRenderer:
                     doc_theme: str = 'theme_modern.css', code_theme: str = 'pygments.css',
                     paper_size: str = 'A4', watermark: str = '', footer_text: str = '',
                     input_filepath: str = None, custom_css_path: str = '', margins: str = '',
-                    page_numbers: bool = False, page_num_format: str = 'simple', lang: str = 'ru') -> str:
+                    page_numbers: bool = False, page_num_format: str = 'simple', lang: str = 'ru',
+                    word_count: int = 0) -> str:
         """
         Renders the final HTML string from Markdown HTML content + Jinja2 template.
         This is reused by both PDF rendering and HTML export.
@@ -49,6 +51,21 @@ class PDFRenderer:
         safe_watermark = watermark.replace('"', '\\"').replace('\\', '\\\\') if watermark else ''
         safe_footer = footer_text.replace('"', '\\"').replace('\\', '\\\\') if footer_text else ''
 
+        # Resolve dynamic footer variables
+        import datetime
+        current_date = datetime.datetime.now().strftime("%d.%m.%Y")
+        current_time = datetime.datetime.now().strftime("%H:%M")
+        input_filename = os.path.basename(input_filepath) if input_filepath else ""
+        doc_title = metadata.get('title', '')
+
+        resolved_footer = safe_footer
+        if resolved_footer:
+            resolved_footer = resolved_footer.replace("{date}", current_date)
+            resolved_footer = resolved_footer.replace("{time}", current_time)
+            resolved_footer = resolved_footer.replace("{filename}", input_filename)
+            resolved_footer = resolved_footer.replace("{title}", doc_title)
+            resolved_footer = resolved_footer.replace("{word_count}", str(word_count))
+
         tr_page = 'Страница' if lang == 'ru' else 'Page'
         tr_of = 'из' if lang == 'ru' else 'of'
 
@@ -60,7 +77,7 @@ class PDFRenderer:
             custom_css=custom_css,
             paper_size=paper_size,
             watermark=safe_watermark,
-            footer_text=safe_footer,
+            footer_text=resolved_footer,
             margins=margins,
             page_numbers=page_numbers,
             page_num_format=page_num_format,
@@ -74,7 +91,7 @@ class PDFRenderer:
                paper_size: str = 'A4', watermark: str = '', footer_text: str = '',
                input_filepath: str = None, custom_css_path: str = '', margins: str = '',
                page_numbers: bool = False, page_num_format: str = 'simple', lang: str = 'ru',
-               cancel_flag: callable = None):
+               cancel_flag: callable = None, compress: bool = False, word_count: int = 0):
         """
         Takes raw HTML content (from Markdown), injects it into the base template,
         and renders it to a PDF using WeasyPrint.
@@ -82,7 +99,7 @@ class PDFRenderer:
         rendered_html = self.render_html(
             html_content, metadata, doc_theme, code_theme,
             paper_size, watermark, footer_text, input_filepath, custom_css_path, margins,
-            page_numbers, page_num_format, lang
+            page_numbers, page_num_format, lang, word_count
         )
 
         # Determine base URL for relative resources
@@ -141,3 +158,20 @@ class PDFRenderer:
                     os.remove(temp_err_path)
                 except Exception:
                     pass
+
+        # Post-process: compress PDF if requested
+        if compress:
+            try:
+                from pypdf import PdfReader, PdfWriter
+                reader = PdfReader(output_path)
+                writer = PdfWriter()
+                for page in reader.pages:
+                    page.compress_content_streams()
+                    writer.add_page(page)
+                if reader.metadata:
+                    writer.add_metadata({k: v for k, v in reader.metadata.items() if v})
+                with open(output_path, 'wb') as f:
+                    writer.write(f)
+                logger.info("PDF compressed: %s", output_path)
+            except Exception as e:
+                logger.warning("PDF compression failed: %s", e)

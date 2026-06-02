@@ -16,6 +16,372 @@ from src.gui.translations import TRANSLATIONS
 
 logger = logging.getLogger("MarkdownToPDF.dialogs")
 
+class GitHubSyncDialog(QDialog):
+    """GitHub Sync dialog for push/pull/commit operations."""
+
+    def __init__(self, parent=None, folder: str = "", lang="ru"):
+        super().__init__(parent)
+        self.lang = lang
+        self.folder = folder
+        self.setWindowTitle("🐙 GitHub Sync")
+        self.setMinimumSize(520, 420)
+
+        layout = QVBoxLayout(self)
+
+        # Status
+        self.status_label = QLabel(f"📁 {folder}")
+        self.status_label.setStyleSheet("font-weight: bold; color: #e2e8f0; padding: 5px;")
+        layout.addWidget(self.status_label)
+
+        # Git status output
+        self.status_output = QTextBrowser()
+        self.status_output.setStyleSheet("font-family: monospace; font-size: 12px;")
+        layout.addWidget(self.status_output)
+
+        # Commit message
+        msg_layout = QHBoxLayout()
+        self.commit_input = QLineEdit()
+        self.commit_input.setPlaceholderText("Commit message...")
+        msg_layout.addWidget(self.commit_input)
+        layout.addLayout(msg_layout)
+
+        # Buttons
+        btn_layout = QHBoxLayout()
+
+        btn_status = QPushButton("🔄 Status")
+        btn_status.clicked.connect(self._git_status)
+        btn_layout.addWidget(btn_status)
+
+        btn_init = QPushButton("📁 git init")
+        btn_init.clicked.connect(self._git_init)
+        btn_layout.addWidget(btn_init)
+
+        btn_commit = QPushButton("✅ Commit All")
+        btn_commit.setStyleSheet("QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #059669,stop:1 #10b981); color: white; font-weight: bold; border: none; padding: 4px 12px; border-radius: 6px; } QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #047857,stop:1 #059669); }")
+        btn_commit.clicked.connect(self._git_commit)
+        btn_layout.addWidget(btn_commit)
+
+        btn_push = QPushButton("⬆ Push")
+        btn_push.setStyleSheet("QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #2563eb,stop:1 #60a5fa); color: white; font-weight: bold; border: none; padding: 4px 12px; border-radius: 6px; } QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #1d4ed8,stop:1 #2563eb); }")
+        btn_push.clicked.connect(self._git_push)
+        btn_layout.addWidget(btn_push)
+
+        btn_pull = QPushButton("⬇ Pull")
+        btn_pull.clicked.connect(self._git_pull)
+        btn_layout.addWidget(btn_pull)
+
+        layout.addLayout(btn_layout)
+
+        # Log
+        btn_log = QPushButton("📜 Show Log")
+        btn_log.clicked.connect(self._git_log)
+        layout.addWidget(btn_log)
+
+        btn_close = QPushButton("Close")
+        btn_close.clicked.connect(self.close)
+        layout.addWidget(btn_close)
+
+        self._git_status()
+
+    def _git_status(self):
+        from src.core.github_sync import git_status, is_git_repo
+        if not is_git_repo(self.folder):
+            self.status_output.setHtml("<p style='color:#e74c3c;'>Not a git repository. Click 'git init' first.</p>")
+            return
+        status = git_status(self.folder)
+        lines = [f"<b>Git Status:</b><br>"]
+        if status["staged"]:
+            lines.append(f"<span style='color:#27ae60;'>Staged:</span> {', '.join(status['staged'])}<br>")
+        if status["modified"]:
+            lines.append(f"<span style='color:#e67e22;'>Modified:</span> {', '.join(status['modified'])}<br>")
+        if status["untracked"]:
+            lines.append(f"<span style='color:#95a5a6;'>Untracked:</span> {', '.join(status['untracked'])}<br>")
+        if not any([status["staged"], status["modified"], status["untracked"]]):
+            lines.append("<span style='color:#27ae60;'>Working tree clean</span>")
+        self.status_output.setHtml("".join(lines))
+
+    def _git_init(self):
+        from src.core.github_sync import git_init
+        result = git_init(self.folder)
+        if result["success"]:
+            self.status_output.setHtml(f"<span style='color:#27ae60;'>✅ {result['output']}</span>")
+        else:
+            self.status_output.setHtml(f"<span style='color:#e74c3c;'>❌ {result.get('error', 'Failed')}</span>")
+
+    def _git_commit(self):
+        from src.core.github_sync import git_commit
+        msg = self.commit_input.text().strip()
+        if not msg:
+            msg = "Update from MarkdownToPDF Converter"
+        result = git_commit(self.folder, msg)
+        if result["success"]:
+            self.status_output.setHtml(f"<span style='color:#27ae60;'>✅ Committed: {msg}</span>")
+        else:
+            self.status_output.setHtml(f"<span style='color:#e74c3c;'>❌ {result.get('error', 'Failed')}</span>")
+        self._git_status()
+
+    def _git_push(self):
+        from src.core.github_sync import git_push
+        result = git_push(self.folder)
+        if result["success"]:
+            self.status_output.setHtml(f"<span style='color:#27ae60;'>✅ Pushed successfully</span>")
+        else:
+            self.status_output.setHtml(f"<span style='color:#e74c3c;'>❌ {result.get('error', 'Failed')}</span>")
+
+    def _git_pull(self):
+        from src.core.github_sync import git_pull
+        result = git_pull(self.folder)
+        if result["success"]:
+            self.status_output.setHtml(f"<span style='color:#27ae60;'>✅ Pulled successfully</span>")
+        else:
+            self.status_output.setHtml(f"<span style='color:#e74c3c;'>❌ {result.get('error', 'Failed')}</span>")
+
+    def _git_log(self):
+        from src.core.github_sync import git_log
+        commits = git_log(self.folder)
+        if not commits:
+            self.status_output.setHtml("No commits found")
+            return
+        lines = ["<b>Recent Commits:</b><br>"]
+        for c in commits:
+            lines.append(f"<code>{c['hash']}</code> {c['message']} <span style='color:#999'>({c['date'][:10]})</span><br>")
+        self.status_output.setHtml("".join(lines))
+
+
+class PluginManagerDialog(QDialog):
+    """Plugin manager dialog."""
+
+    def __init__(self, parent=None, lang="ru"):
+        super().__init__(parent)
+        self.lang = lang
+        self.setWindowTitle("🧩 Plugin Manager")
+        self.setMinimumSize(480, 360)
+
+        layout = QVBoxLayout(self)
+
+        info = QLabel("Plugins are loaded from the <code>plugins/</code> directory.")
+        info.setWordWrap(True)
+        layout.addWidget(info)
+
+        self.plugin_list = QListWidget()
+        self.plugin_list.setStyleSheet("""
+            QListWidget { background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #e2e8f0; }
+            QListWidget::item { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+            QListWidget::item:hover { background-color: rgba(51, 65, 85, 0.6); }
+            QListWidget::item:selected { background-color: rgba(99, 102, 241, 0.6); color: white; }
+        """)
+        layout.addWidget(self.plugin_list)
+
+        self._refresh_list()
+
+        btn_layout = QHBoxLayout()
+        btn_refresh = QPushButton("🔄 Refresh")
+        btn_refresh.clicked.connect(self._refresh_list)
+        btn_layout.addWidget(btn_refresh)
+
+        btn_open_dir = QPushButton("📂 Open plugins/ folder")
+        btn_open_dir.clicked.connect(self._open_plugins_dir)
+        btn_layout.addWidget(btn_open_dir)
+
+        btn_layout.addStretch()
+        btn_close = QPushButton("Close")
+        btn_close.clicked.connect(self.close)
+        btn_layout.addWidget(btn_close)
+        layout.addLayout(btn_layout)
+
+    def _refresh_list(self):
+        self.plugin_list.clear()
+        from src.core.plugin_system import get_all_plugins, get_all_hooks
+        plugins = get_all_plugins()
+        hooks = get_all_hooks()
+
+        if plugins:
+            for name, info in plugins.items():
+                self.plugin_list.addItem(f"🔌 {name} v{info['version']} by {info['author']}")
+        else:
+            self.plugin_list.addItem("No plugins registered")
+
+        self.plugin_list.addItem("---")
+        for hook_name, handlers in hooks.items():
+            self.plugin_list.addItem(f"🪝 {hook_name}: {len(handlers)} handler(s)")
+
+    def _open_plugins_dir(self):
+        import subprocess
+        plugins_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plugins")
+        os.makedirs(plugins_dir, exist_ok=True)
+        subprocess.run(["explorer", os.path.normpath(plugins_dir)])
+
+
+class MultiExportDialog(QDialog):
+    """Dialog for selecting multiple export formats."""
+
+    def __init__(self, parent=None, lang="ru"):
+        super().__init__(parent)
+        self.lang = lang
+        self.setWindowTitle("📦 Multi-Export")
+        self.setMinimumSize(380, 300)
+
+        layout = QVBoxLayout(self)
+
+        layout.addWidget(QLabel("Select formats to export:"))
+
+        self.format_checks = {}
+        formats = [("PDF", "pdf"), ("DOCX", "docx"), ("HTML", "html"), ("EPUB", "epub"), ("PPTX", "pptx"), ("PNG", "png"), ("JPG", "jpg")]
+        for label, fmt in formats:
+            from PyQt6.QtWidgets import QCheckBox
+            chk = QCheckBox(label)
+            if fmt == "pdf":
+                chk.setChecked(True)
+            self.format_checks[fmt] = chk
+            layout.addWidget(chk)
+
+        btn_layout = QHBoxLayout()
+        btn_ok = QPushButton("Export")
+        btn_ok.setStyleSheet("QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #059669,stop:1 #10b981); color: white; font-weight: bold; padding: 8px 16px; border: none; border-radius: 6px; } QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #047857,stop:1 #059669); }")
+        btn_ok.clicked.connect(self.accept)
+        btn_layout.addWidget(btn_ok)
+
+        btn_cancel = QPushButton("Cancel")
+        btn_cancel.clicked.connect(self.close)
+        btn_layout.addWidget(btn_cancel)
+        layout.addLayout(btn_layout)
+
+        self.selected_formats = []
+
+    def accept(self):
+        self.selected_formats = [fmt for fmt, chk in self.format_checks.items() if chk.isChecked()]
+        if not self.selected_formats:
+            QMessageBox.warning(self, "Multi-Export", "Select at least one format")
+            return
+        super().accept()
+
+
+class CitationManagerDialog(QDialog):
+    """Citation/bibliography manager."""
+
+    def __init__(self, parent=None, lang="ru"):
+        super().__init__(parent)
+        self.lang = lang
+        self.setWindowTitle("📚 Citation Manager")
+        self.setMinimumSize(550, 420)
+
+        from src.config import AppConfig
+        self.citations_file = os.path.join(AppConfig.data_dir(), "citations.json")
+
+        layout = QVBoxLayout(self)
+
+        # Citation list
+        self.citation_list = QListWidget()
+        self.citation_list.setStyleSheet("""
+            QListWidget { background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #e2e8f0; }
+            QListWidget::item { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+            QListWidget::item:hover { background-color: rgba(51, 65, 85, 0.6); }
+            QListWidget::item:selected { background-color: rgba(99, 102, 241, 0.6); color: white; }
+        """)
+        layout.addWidget(self.citation_list)
+
+        self._refresh_list()
+
+        # Add form
+        form = QFormLayout()
+        self.key_input = QLineEdit()
+        self.key_input.setPlaceholderText("e.g., smith2024")
+        form.addRow("Key:", self.key_input)
+
+        self.authors_input = QLineEdit()
+        self.authors_input.setPlaceholderText("e.g., Smith, J.")
+        form.addRow("Authors:", self.authors_input)
+
+        self.title_input = QLineEdit()
+        self.title_input.setPlaceholderText("Paper title")
+        form.addRow("Title:", self.title_input)
+
+        self.year_input = QLineEdit()
+        self.year_input.setPlaceholderText("2024")
+        form.addRow("Year:", self.year_input)
+
+        self.source_input = QLineEdit()
+        self.source_input.setPlaceholderText("Journal name (optional)")
+        form.addRow("Source:", self.source_input)
+
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("https://... (optional)")
+        form.addRow("URL:", self.url_input)
+
+        layout.addLayout(form)
+
+        # Buttons
+        btn_layout = QHBoxLayout()
+        btn_add = QPushButton("➕ Add Citation")
+        btn_add.setStyleSheet("QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #059669,stop:1 #10b981); color: white; font-weight: bold; border: none; padding: 4px 12px; border-radius: 6px; } QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #047857,stop:1 #059669); }")
+        btn_add.clicked.connect(self._add_citation)
+        btn_layout.addWidget(btn_add)
+
+        btn_remove = QPushButton("➖ Remove")
+        btn_remove.clicked.connect(self._remove_citation)
+        btn_layout.addWidget(btn_remove)
+
+        btn_bib = QPushButton("📋 Generate Bibliography")
+        btn_bib.setStyleSheet("QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #2563eb,stop:1 #60a5fa); color: white; font-weight: bold; border: none; padding: 4px 12px; border-radius: 6px; } QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #1d4ed8,stop:1 #2563eb); }")
+        btn_bib.clicked.connect(self._generate_bibliography)
+        btn_layout.addWidget(btn_bib)
+
+        btn_close = QPushButton("Close")
+        btn_close.clicked.connect(self.close)
+        btn_layout.addWidget(btn_close)
+        layout.addLayout(btn_layout)
+
+    def _refresh_list(self):
+        self.citation_list.clear()
+        from src.core.citation_manager import get_citations
+        for c in get_citations(self.citations_file):
+            self.citation_list.addItem(f"[{c['key']}] {c['authors']} ({c['year']}) — {c['title']}")
+
+    def _add_citation(self):
+        key = self.key_input.text().strip()
+        authors = self.authors_input.text().strip()
+        title = self.title_input.text().strip()
+        year = self.year_input.text().strip()
+        if not key or not title:
+            QMessageBox.warning(self, "Citation", "Key and Title are required")
+            return
+        from src.core.citation_manager import add_citation
+        add_citation(self.citations_file, key, authors, title, year,
+                     self.source_input.text().strip(), self.url_input.text().strip())
+        self._refresh_list()
+        self.key_input.clear()
+        self.authors_input.clear()
+        self.title_input.clear()
+        self.year_input.clear()
+        self.source_input.clear()
+        self.url_input.clear()
+
+    def _remove_citation(self):
+        item = self.citation_list.currentItem()
+        if not item:
+            return
+        text = item.text()
+        key = text.split("]")[0].replace("[", "")
+        from src.core.citation_manager import remove_citation
+        remove_citation(self.citations_file, key)
+        self._refresh_list()
+
+    def _generate_bibliography(self):
+        from src.core.citation_manager import generate_bibliography
+        bib = generate_bibliography(self.citations_file)
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Bibliography")
+        dlg.setMinimumSize(500, 350)
+        layout = QVBoxLayout(dlg)
+        browser = QTextBrowser()
+        browser.setHtml(bib.replace("\n", "<br>"))
+        layout.addWidget(browser)
+        btn = QPushButton("Close")
+        btn.clicked.connect(dlg.close)
+        layout.addWidget(btn)
+        dlg.exec()
+
+
 class DocumentBuilderDialog(QDialog):
     def __init__(self, parent=None, lang="ru"):
         super().__init__(parent)
@@ -60,8 +426,8 @@ class DocumentBuilderDialog(QDialog):
         self.btn_down.clicked.connect(self.move_down)
 
         self.btn_add_folder.setStyleSheet("""
-            QPushButton { background-color: #3498db; color: white; font-weight: bold; padding: 8px; border-radius: 4px; }
-            QPushButton:hover { background-color: #2980b9; }
+            QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #2563eb,stop:1 #60a5fa); color: white; font-weight: bold; padding: 8px; border: none; border-radius: 6px; }
+            QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #1d4ed8,stop:1 #2563eb); }
         """)
 
         btn_layout.addWidget(self.btn_add_folder)
@@ -91,8 +457,8 @@ class DocumentBuilderDialog(QDialog):
         # Build button
         self.btn_build = QPushButton(t('merge_dialog_btn_build'))
         self.btn_build.setStyleSheet("""
-            QPushButton { background-color: #27ae60; color: white; font-weight: bold; padding: 12px; border-radius: 4px; font-size: 14px; }
-            QPushButton:hover { background-color: #219653; }
+            QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #059669,stop:1 #10b981); color: white; font-weight: bold; padding: 12px; border: none; border-radius: 8px; font-size: 14px; }
+            QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #047857,stop:1 #059669); }
         """)
         self.btn_build.clicked.connect(self.build_merged_document)
         layout.addWidget(self.btn_build)
@@ -358,7 +724,7 @@ class DocumentAuditorDialog(QDialog):
         
         if not issues:
             lbl = QLabel(t('audit_empty'))
-            lbl.setStyleSheet("font-size: 14px; font-weight: bold; color: #27ae60; padding: 20px;")
+            lbl.setStyleSheet("font-size: 14px; font-weight: bold; color: #10b981; padding: 20px;")
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(lbl)
             
@@ -405,7 +771,7 @@ class DocumentAuditorDialog(QDialog):
             layout.addWidget(self.table)
             
             lbl_tip = QLabel("💡 Дважды кликните на любую строку, чтобы мгновенно перейти к ней в редакторе." if lang == "ru" else "💡 Double-click any row to jump to that line in the editor.")
-            lbl_tip.setStyleSheet("font-size: 11px; color: #7f8c8d; padding-top: 5px;")
+            lbl_tip.setStyleSheet("font-size: 11px; color: #94a3b8; padding-top: 5px;")
             layout.addWidget(lbl_tip)
             
             self.button_box = QDialogButtonBox(
@@ -415,7 +781,7 @@ class DocumentAuditorDialog(QDialog):
             
             from PyQt6.QtWidgets import QPushButton
             self.btn_autofix = QPushButton(t('btn_audit_autofix'))
-            self.btn_autofix.setStyleSheet("background-color: #27ae60; color: white; font-weight: bold; padding: 4px 10px;")
+            self.btn_autofix.setStyleSheet("QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #059669,stop:1 #10b981); color: white; font-weight: bold; padding: 4px 10px; border: none; border-radius: 6px; } QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #047857,stop:1 #059669); }")
             self.btn_autofix.clicked.connect(self.on_autofix_clicked)
             self.button_box.addButton(self.btn_autofix, QDialogButtonBox.ButtonRole.ActionRole)
             
@@ -574,7 +940,7 @@ class ColorButton(QPushButton):
         self.clicked.connect(self.choose_color)
 
     def update_style(self):
-        self.setStyleSheet(f"background-color: {self.color.name()}; border: 1px solid #ced6e0; border-radius: 4px; height: 24px;")
+        self.setStyleSheet(f"background-color: {self.color.name()}; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; height: 24px;")
 
     def choose_color(self):
         dlg = QColorDialog(self.color, self)
@@ -731,9 +1097,9 @@ class RevisionHistoryDialog(QDialog):
         self.btn_restore = self.button_box.addButton(t('history_btn_restore'), QDialogButtonBox.ButtonRole.AcceptRole)
         self.btn_restore.setEnabled(False)
         self.btn_restore.setStyleSheet("""
-            QPushButton { background-color: #2ecc71; color: white; font-weight: bold; padding: 6px 15px; border-radius: 4px; }
-            QPushButton:hover { background-color: #27ae60; }
-            QPushButton:disabled { background-color: #bdc3c7; color: #7f8c8d; }
+            QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #059669,stop:1 #10b981); color: white; font-weight: bold; padding: 6px 15px; border: none; border-radius: 6px; }
+            QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #047857,stop:1 #059669); }
+            QPushButton:disabled { background: rgba(100, 116, 139, 0.4); color: #94a3b8; }
         """)
         
         self.btn_cancel = self.button_box.addButton(QDialogButtonBox.StandardButton.Cancel)
@@ -792,5 +1158,375 @@ class RevisionHistoryDialog(QDialog):
             self.preview_browser.setHtml(f"<p style='color:red;'>Error loading preview: {e}</p>")
             self.btn_restore.setEnabled(False)
             self.selected_content = None
+
+
+class DiffDialog(QDialog):
+    """Side-by-side diff viewer for two Markdown files."""
+    def __init__(self, parent=None, lang="ru"):
+        super().__init__(parent)
+        self.lang = lang
+        self.setWindowTitle("Сравнение документов" if lang == "ru" else "Compare Documents")
+        self.setMinimumSize(900, 600)
+        layout = QVBoxLayout(self)
+
+        # File selection
+        file_layout = QHBoxLayout()
+        left_layout = QVBoxLayout()
+        left_layout.addWidget(QLabel("Файл A:" if lang == "ru" else "File A:"))
+        self.left_path = QLineEdit()
+        self.left_path.setReadOnly(True)
+        left_layout.addWidget(self.left_path)
+        self.btn_left = QPushButton("Обзор...")
+        self.btn_left.clicked.connect(lambda: self._select_file('left'))
+        left_layout.addWidget(self.btn_left)
+        file_layout.addLayout(left_layout)
+
+        right_layout = QVBoxLayout()
+        right_layout.addWidget(QLabel("Файл B:" if lang == "ru" else "File B:"))
+        self.right_path = QLineEdit()
+        self.right_path.setReadOnly(True)
+        right_layout.addWidget(self.right_path)
+        self.btn_right = QPushButton("Обзор...")
+        self.btn_right.clicked.connect(lambda: self._select_file('right'))
+        right_layout.addWidget(self.btn_right)
+        file_layout.addLayout(right_layout)
+        layout.addLayout(file_layout)
+
+        # Compare button
+        self.btn_compare = QPushButton("Сравнить" if lang == "ru" else "Compare")
+        self.btn_compare.clicked.connect(self.do_compare)
+        self.btn_compare.setStyleSheet("QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #2563eb,stop:1 #60a5fa); color: white; padding: 6px 16px; font-weight: bold; border: none; border-radius: 6px; } QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #1d4ed8,stop:1 #2563eb); }")
+        layout.addWidget(self.btn_compare)
+
+        # Diff output
+        self.diff_browser = QTextBrowser()
+        self.diff_browser.setOpenExternalLinks(False)
+        layout.addWidget(self.diff_browser)
+
+        # Stats
+        self.stats_label = QLabel()
+        layout.addWidget(self.stats_label)
+
+        btn_close = QPushButton("Закрыть")
+        btn_close.clicked.connect(self.close)
+        layout.addWidget(btn_close)
+
+    def _select_file(self, side):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Выберите Markdown файл", "",
+            "Markdown (*.md);;All Files (*)"
+        )
+        if path:
+            if side == 'left':
+                self.left_path.setText(path)
+            else:
+                self.right_path.setText(path)
+
+    def do_compare(self):
+        left = self.left_path.text()
+        right = self.right_path.text()
+        if not left or not right:
+            QMessageBox.warning(self, "Ошибка", "Выберите оба файла для сравнения")
+            return
+
+        try:
+            with open(left, 'r', encoding='utf-8') as f:
+                left_lines = f.readlines()
+            with open(right, 'r', encoding='utf-8') as f:
+                right_lines = f.readlines()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка чтения файлов: {e}")
+            return
+
+        import difflib
+        diff = list(difflib.unified_diff(
+            left_lines, right_lines,
+            fromfile=os.path.basename(left),
+            tofile=os.path.basename(right),
+            lineterm=''
+        ))
+
+        if not diff:
+            self.diff_browser.setHtml("<p style='color: green; font-size: 14px;'>✅ Файлы идентичны</p>")
+            self.stats_label.setText("Файлы идентичны")
+            return
+
+        # Build HTML diff
+        html_parts = ['<pre style="font-family: monospace; font-size: 12px; padding: 10px;">']
+        added = removed = 0
+        for line in diff:
+            escaped = line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            if line.startswith('+++') or line.startswith('---'):
+                html_parts.append(f'<span style="font-weight: bold; color: #3498db;">{escaped}</span>')
+            elif line.startswith('@@'):
+                html_parts.append(f'<span style="color: #9b59b6; font-weight: bold;">{escaped}</span>')
+            elif line.startswith('+'):
+                added += 1
+                html_parts.append(f'<span style="background: #d5f5e3; color: #27ae60;">{escaped}</span>')
+            elif line.startswith('-'):
+                removed += 1
+                html_parts.append(f'<span style="background: #fadbd8; color: #e74c3c;">{escaped}</span>')
+            else:
+                html_parts.append(escaped)
+        html_parts.append('</pre>')
+
+        self.diff_browser.setHtml('\n'.join(html_parts))
+        self.stats_label.setText(f"Добавлено: {added} | Удалено: {removed}")
+
+
+class SnippetsManagerDialog(QDialog):
+    """Code snippets library manager."""
+    def __init__(self, parent=None, lang="ru"):
+        super().__init__(parent)
+        self.lang = lang
+        self.selected_code = None
+        self.setWindowTitle("Библиотека сниппетов" if lang == "ru" else "Snippet Library")
+        self.setMinimumSize(600, 500)
+        layout = QVBoxLayout(self)
+
+        from src.core.snippets import SnippetLibrary
+        self.library = SnippetLibrary()
+
+        # Search
+        search_layout = QHBoxLayout()
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Поиск..." if lang == "ru" else "Search...")
+        self.search_input.textChanged.connect(self.filter_snippets)
+        search_layout.addWidget(self.search_input)
+        layout.addLayout(search_layout)
+
+        # Snippet list
+        self.snippet_list = QListWidget()
+        self.snippet_list.currentItemChanged.connect(self.on_select)
+        layout.addWidget(self.snippet_list)
+
+        # Preview
+        self.preview = QTextBrowser()
+        self.preview.setMaximumHeight(200)
+        layout.addWidget(self.preview)
+
+        # Buttons
+        btn_layout = QHBoxLayout()
+        self.btn_insert = QPushButton("Вставить" if lang == "ru" else "Insert")
+        self.btn_insert.clicked.connect(self.insert_snippet)
+        self.btn_insert.setStyleSheet("QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #059669,stop:1 #10b981); color: white; padding: 6px 16px; border: none; border-radius: 6px; } QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #047857,stop:1 #059669); }")
+        btn_layout.addWidget(self.btn_insert)
+
+        self.btn_add = QPushButton("Добавить текущий код")
+        self.btn_add.clicked.connect(self.add_current_code)
+        btn_layout.addWidget(self.btn_add)
+
+        self.btn_delete = QPushButton("Удалить")
+        self.btn_delete.clicked.connect(self.delete_snippet)
+        btn_layout.addWidget(self.btn_delete)
+
+        btn_layout.addStretch()
+        self.btn_close = QPushButton("Закрыть")
+        self.btn_close.clicked.connect(self.close)
+        btn_layout.addWidget(self.btn_close)
+        layout.addLayout(btn_layout)
+
+        self.refresh_list()
+
+    def refresh_list(self):
+        self.snippet_list.clear()
+        for s in self.library.get_all():
+            item = QListWidgetItem(f"[{s.language}] {s.name}")
+            item.setData(Qt.ItemDataRole.UserRole, s)
+            self.snippet_list.addItem(item)
+
+    def filter_snippets(self, text):
+        for i in range(self.snippet_list.count()):
+            item = self.snippet_list.item(i)
+            item.setHidden(text.lower() not in item.text().lower())
+
+    def on_select(self, current, previous):
+        if current:
+            snippet = current.data(Qt.ItemDataRole.UserRole)
+            escaped = snippet.code.replace('&', '&amp;').replace('<', '&lt;')
+            self.preview.setHtml(f"<b>{snippet.name}</b> ({snippet.language})<br><pre>{escaped}</pre>")
+
+    def insert_snippet(self):
+        current = self.snippet_list.currentItem()
+        if current:
+            snippet = current.data(Qt.ItemDataRole.UserRole)
+            self.selected_code = snippet.code
+            self.accept()
+
+    def add_current_code(self):
+        from PyQt6.QtWidgets import QInputDialog
+        name, ok = QInputDialog.getText(self, "Имя сниппета", "Название:")
+        if ok and name:
+            lang, ok2 = QInputDialog.getText(self, "Язык", "Язык (python, js, html...):")
+            if ok2 and lang:
+                code = self.parent().live_editor.textCursor().selectedText() if self.parent() else ""
+                if not code:
+                    code = self.parent().live_editor.toPlainText()[:500] if self.parent() else ""
+                self.library.add(name, lang, code)
+                self.refresh_list()
+
+    def delete_snippet(self):
+        current = self.snippet_list.currentItem()
+        if current:
+            row = self.snippet_list.row(current)
+            self.library.remove(row)
+            self.refresh_list()
+
+
+class CloudTemplatesDialog(QDialog):
+    """Browse and download community Markdown templates."""
+    def __init__(self, parent=None, lang="ru"):
+        super().__init__(parent)
+        self.lang = lang
+        self.selected_content = None
+        self.setWindowTitle("Облако шаблонов" if lang == "ru" else "Cloud Templates")
+        self.setMinimumSize(600, 500)
+        layout = QVBoxLayout(self)
+
+        # Search
+        search_layout = QHBoxLayout()
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Поиск шаблонов..." if lang == "ru" else "Search templates...")
+        self.search_input.textChanged.connect(self.filter_templates)
+        search_layout.addWidget(self.search_input)
+        layout.addLayout(search_layout)
+
+        # Template list
+        self.template_list = QListWidget()
+        self.template_list.currentItemChanged.connect(self.on_select)
+        layout.addWidget(self.template_list)
+
+        # Preview
+        self.preview = QTextBrowser()
+        self.preview.setMaximumHeight(200)
+        layout.addWidget(self.preview)
+
+        # Buttons
+        btn_layout = QHBoxLayout()
+        self.btn_insert = QPushButton("Вставить" if lang == "ru" else "Insert")
+        self.btn_insert.clicked.connect(self.insert_template)
+        self.btn_insert.setStyleSheet("QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #059669,stop:1 #10b981); color: white; padding: 6px 16px; border: none; border-radius: 6px; } QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #047857,stop:1 #059669); }")
+        btn_layout.addWidget(self.btn_insert)
+
+        self.btn_refresh = QPushButton("🔄 Обновить")
+        self.btn_refresh.clicked.connect(self.load_templates)
+        btn_layout.addWidget(self.btn_refresh)
+
+        btn_layout.addStretch()
+        self.btn_close = QPushButton("Закрыть")
+        self.btn_close.clicked.connect(self.close)
+        btn_layout.addWidget(self.btn_close)
+        layout.addLayout(btn_layout)
+
+        self.templates = []
+        self.load_templates()
+
+    def load_templates(self):
+        from src.core.cloud_templates import get_cloud_templates_index
+        self.templates = get_cloud_templates_index(self.lang)
+        self.refresh_list()
+
+    def refresh_list(self):
+        self.template_list.clear()
+        for t in self.templates:
+            item = QListWidgetItem(f"{t['name']}  [{', '.join(t.get('tags', []))}]")
+            item.setData(Qt.ItemDataRole.UserRole, t)
+            self.template_list.addItem(item)
+
+    def filter_templates(self, text):
+        for i in range(self.template_list.count()):
+            item = self.template_list.item(i)
+            item.setHidden(text.lower() not in item.text().lower())
+
+    def on_select(self, current, previous):
+        if current:
+            t = current.data(Qt.ItemDataRole.UserRole)
+            content = t.get('content', t.get('description', ''))
+            escaped = content[:1000].replace('&', '&amp;').replace('<', '&lt;')
+            self.preview.setHtml(f"<b>{t['name']}</b><br><pre>{escaped}</pre>")
+
+    def insert_template(self):
+        current = self.template_list.currentItem()
+        if current:
+            t = current.data(Qt.ItemDataRole.UserRole)
+            self.selected_content = t.get('content', '')
+            self.accept()
+
+
+class ShortcutsDialog(QDialog):
+    """Glassmorphism keyboard shortcuts overlay."""
+
+    SHORTCUTS = [
+        ("Ctrl+N", "Новый файл / New file"),
+        ("Ctrl+O", "Открыть файл / Open file"),
+        ("Ctrl+S", "Сохранить / Save"),
+        ("Ctrl+Shift+S", "Сохранить как / Save as"),
+        ("Ctrl+Z", "Отменить / Undo"),
+        ("Ctrl+Y", "Повторить / Redo"),
+        ("Ctrl+F", "Поиск и замена / Search & Replace"),
+        ("Ctrl+H", "Замена / Replace"),
+        ("Ctrl+P", "Печать / Print"),
+        ("Ctrl+B", "Жирный / Bold"),
+        ("Ctrl+I", "Курсив / Italic"),
+        ("Ctrl+K", "Ссылка / Link"),
+        ("Ctrl+Shift+K", "Код / Code"),
+        ("Ctrl+Shift+Q", "Цитата / Quote"),
+        ("Ctrl+Shift+L", "Список / List"),
+        ("Ctrl+Shift+X", "Зачёркнутый / Strikethrough"),
+        ("Ctrl+E", "Эмодзи / Emoji"),
+        ("Ctrl+=", "Zoom in"),
+        ("Ctrl+-", "Zoom out"),
+        ("Ctrl+0", "Сброс зума / Reset zoom"),
+        ("Ctrl+M", "Мерmaid / Mermaid"),
+        ("Ctrl+D", "Диаграмма / Diagram"),
+        ("Ctrl+Tab", "Следующая вкладка / Next tab"),
+        ("F11", "Zen режим / Zen mode"),
+        ("Ctrl+Shift+F", "Фокус / Focus mode"),
+    ]
+
+    def __init__(self, parent=None, lang="ru"):
+        super().__init__(parent)
+        self.setWindowTitle("⌨️ Shortcuts" if lang == "en" else "⌨️ Горячие клавиши")
+        self.setMinimumSize(520, 480)
+        self.setModal(True)
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(12)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        title = QLabel("⌨️ Горячие клавиши" if lang == "ru" else "⌨️ Keyboard Shortcuts")
+        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #e2e8f0; border: none;")
+        layout.addWidget(title)
+
+        html_parts = ['<table style="width:100%; border-collapse:collapse; font-size:13px;">']
+        for i, (key, desc) in enumerate(self.SHORTCUTS):
+            bg = "rgba(51, 65, 85, 0.3)" if i % 2 == 0 else "transparent"
+            html_parts.append(
+                f'<tr style="background:{bg};">'
+                f'<td style="padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">'
+                f'<kbd style="background:rgba(99,102,241,0.2); color:#a5b4fc; padding:3px 8px; '
+                f'border-radius:4px; font-family:monospace; font-size:12px;">{key}</kbd></td>'
+                f'<td style="padding:8px 12px; color:#cbd5e1; border-bottom:1px solid rgba(255,255,255,0.05);">{desc}</td>'
+                f'</tr>'
+            )
+        html_parts.append('</table>')
+
+        browser = QTextBrowser()
+        browser.setHtml(''.join(html_parts))
+        browser.setStyleSheet("""
+            QTextBrowser { background: transparent; border: none; color: #e2e8f0; }
+        """)
+        layout.addWidget(browser)
+
+        btn_close = QPushButton("Закрыть" if lang == "ru" else "Close")
+        btn_close.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_close.setStyleSheet("""
+            QPushButton { background: rgba(99, 102, 241, 0.5); color: white; padding: 8px 20px;
+                          border: none; border-radius: 6px; font-weight: bold; }
+            QPushButton:hover { background: rgba(99, 102, 241, 0.7); }
+        """)
+        btn_close.clicked.connect(self.accept)
+        layout.addWidget(btn_close, alignment=Qt.AlignmentFlag.AlignRight)
+
 
 
