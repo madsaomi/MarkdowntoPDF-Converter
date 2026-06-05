@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QCursor
 from PyQt6.QtCore import Qt
+from src.config import AppConfig
 from src.gui.translations import TRANSLATIONS
 from src.gui.dialogs import (
     DocumentAuditorDialog, ReadabilityDashboardDialog,
@@ -456,8 +457,9 @@ code {{
     border-radius: 3px;
 }}
 """
-        os.makedirs("templates", exist_ok=True)
-        theme_path = os.path.abspath("templates/custom_theme.css")
+        templates_dir = os.path.join(AppConfig.base_path(), "templates")
+        os.makedirs(templates_dir, exist_ok=True)
+        theme_path = os.path.join(templates_dir, "custom_theme.css")
         try:
             with open(theme_path, "w", encoding="utf-8") as f:
                 f.write(css_content)
@@ -556,14 +558,14 @@ def save_revision(window):
                 if latest_content == text:
                     return
             except Exception:
-                pass
+                logger.warning("Failed to read latest backup: %s", latest_backup_path)
 
         if len(backups) >= 20:
             for b in backups[:-19]:
                 try:
                     os.remove(os.path.join(file_backup_dir, b))
                 except Exception:
-                    pass
+                    logger.warning("Failed to remove old backup: %s", b)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         words = len([w for w in text.split() if w.strip()])
@@ -583,8 +585,8 @@ def autosave_draft(window):
         if os.path.exists(window.draft_path):
             try:
                 os.remove(window.draft_path)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Failed to remove empty draft: %s", e)
         return
     try:
         with open(window.draft_path, "w", encoding="utf-8") as f:

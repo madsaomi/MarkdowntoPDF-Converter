@@ -1,8 +1,10 @@
-"""Image export renderer - converts Markdown to PNG/JPG using WeasyPrint."""
+"""Image export renderer - converts Markdown to PNG/JPG via WeasyPrint CLI + PyMuPDF."""
 
 import os
 import logging
 import tempfile
+import subprocess
+import time
 
 logger = logging.getLogger("MarkdownToPDF.image_renderer")
 
@@ -16,13 +18,10 @@ class ImageRenderer:
                paper_size: str = 'A4', lang: str = 'ru',
                image_format: str = 'png', dpi: int = 150,
                cancel_flag=None):
-        """
-        Renders HTML content to PNG or JPG image(s).
-        For multi-page documents, creates numbered files: output_1.png, output_2.png, etc.
-        """
         from jinja2 import Environment, FileSystemLoader
+        from src.config import AppConfig
 
-        template_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'templates')
+        template_dir = AppConfig.template_dir()
         env = Environment(loader=FileSystemLoader(template_dir))
         template = env.get_template('base.html')
 
@@ -42,50 +41,85 @@ class ImageRenderer:
             tr_of='из' if lang == 'ru' else 'of',
         )
 
-        # Use WeasyPrint Python API for image rendering
+        wp_exe = self.wp_executable
+        if not wp_exe or not os.path.exists(wp_exe):
+            raise FileNotFoundError(f"Не найден движок WeasyPrint по пути: {wp_exe}")
+
+        # Render HTML to PDF via WeasyPrint CLI
+        fd_html, temp_html_path = tempfile.mkstemp(suffix='.html', text=True)
         try:
-            from weasyprint import HTML as WeasyHTML
-        except ImportError:
-            raise ImportError("WeasyPrint is required for image export. Install with: pip install WeasyPrint")
+            with os.fdopen(fd_html, 'w', encoding='utf-8') as f:
+                f.write(rendered_html)
 
-        base_url = template_dir + "/"
-        doc = WeasyHTML(string=rendered_html, base_url=base_url).render()
+            fd_pdf, temp_pdf_path = tempfile.mkstemp(suffix='.pdf')
+            os.close(fd_pdf)
 
-        # Ensure output directory exists
-        out_dir = os.path.dirname(output_path)
-        if out_dir:
-            os.makedirs(out_dir, exist_ok=True)
+            fd_err, temp_err_path = tempfile.mkstemp(suffix='.log', text=True)
+            with os.fdopen(fd_err, 'w+', encoding='utf-8') as stderr_file:
+                process = subprocess.Popen(
+                    [wp_exe, temp_html_path, temp_pdf_path, '--encoding', 'utf-8'],
+                    stdout=subprocess.DEVNULL, stderr=stderr_file, text=True
+                )
 
-        base_name, ext = os.path.splitext(output_path)
-        ext = ext or ('.png' if image_format == 'png' else '.jpg')
+                start_time = time.time()
+                while process.poll() is None:
+                    if cancel_flag and cancel_flag():
+                        process.kill()
+                        raise RuntimeError("Конвертация отменена пользователем" if lang == 'ru' else "Conversion cancelled by user")
+                    if time.time() - start_time > 300:
+                        process.kill()
+                        raise RuntimeError("Timeout")
+                    time.sleep(0.3)
 
-        pages = doc.pages
-        for i, page in enumerate(pages):
-            if cancel_flag and cancel_flag():
-                raise RuntimeError("Cancelled")
+                if process.returncode != 0:
+                    stderr_file.seek(0)
+                    stderr = stderr_file.read()
+                    raise RuntimeError(stderr or f"WeasyPrint exit code {process.returncode}")
 
-            if len(pages) == 1:
-                page_path = output_path
-            else:
-                page_path = f"{base_name}_{i + 1}{ext}"
+            # Convert PDF pages to images via PyMuPDF
+            import fitz
+            out_dir = os.path.dirname(output_path)
+            if out_dir:
+                os.makedirs(out_dir, exist_ok=True)
 
-            surface = page.paint_page((dpi / 72.0, dpi / 72.0))
+            base_name, ext = os.path.splitext(output_path)
+            ext = ext or ('.png' if image_format == 'png' else '.jpg')
+            zoom = dpi / 72.0
 
-            if image_format == 'png':
-                surface.write_png(page_path)
-            else:
-                # For JPG, write PNG first then convert
-                temp_png = page_path + '.tmp.png'
-                surface.write_png(temp_png)
-                try:
+            pdf_doc = fitz.open(temp_pdf_path)
+            num_pages = len(pdf_doc)
+            for i in range(num_pages):
+                if cancel_flag and cancel_flag():
+                    pdf_doc.close()
+                    raise RuntimeError("Cancelled")
+
+                page = pdf_doc[i]
+                mat = fitz.Matrix(zoom, zoom)
+                pix = page.get_pixmap(matrix=mat)
+
+                if num_pages == 1:
+                    page_path = output_path
+                else:
+                    page_path = f"{base_name}_{i + 1}{ext}"
+
+                if image_format == 'png':
+                    pix.save(page_path)
+                else:
                     from PIL import Image
-                    img = Image.open(temp_png)
-                    rgb_img = img.convert('RGB')
-                    rgb_img.save(page_path, 'JPEG', quality=95)
-                finally:
-                    if os.path.exists(temp_png):
-                        os.remove(temp_png)
+                    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                    img.save(page_path, 'JPEG', quality=95)
 
-            logger.info("Image saved: %s", page_path)
+                logger.info("Image saved: %s", page_path)
 
-        return len(pages)
+            pdf_doc.close()
+            return num_pages
+
+        finally:
+            try:
+                os.unlink(temp_html_path)
+            except OSError:
+                pass
+            try:
+                os.unlink(temp_pdf_path)
+            except OSError:
+                pass

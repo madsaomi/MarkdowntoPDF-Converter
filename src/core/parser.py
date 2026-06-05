@@ -187,7 +187,7 @@ class MarkdownParser:
                         with open(cache_path, 'rb') as f:
                             return f.read()
                 except Exception:
-                    pass
+                    logger.warning("Failed to check cache mtime for %s", cache_path)
             
             # Download
             req = urllib.request.Request(
@@ -202,7 +202,7 @@ class MarkdownParser:
                 with open(cache_path, 'wb') as f:
                     f.write(data)
             except Exception:
-                pass
+                logger.warning("Failed to save image to cache: %s", cache_path)
             
             return data
         
@@ -217,8 +217,6 @@ class MarkdownParser:
             try:
                 # 1. Handle HTTP/HTTPS URLs (with cache)
                 if path_or_url.startswith(('http://', 'https://')):
-                    if not getattr(self, 'kroki_available', True):
-                        return path_or_url
                     img_data = get_cached_or_download(path_or_url)
                     encoded_data = base64.b64encode(img_data).decode('utf-8')
                     return f"data:{content_type};base64,{encoded_data}"

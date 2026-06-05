@@ -69,365 +69,7 @@ from src.gui.ambient_glow import AmbientGlowWidget
 
 # ──────────────────────── Dark / Light stylesheets ────────────────────────
 
-LIGHT_STYLE = """
-/* ── Glassmorphism Light Theme (2026) ── */
-QMainWindow {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-        stop:0 #e8eaf6, stop:0.3 #f3e5f5, stop:0.6 #e0f7fa, stop:1 #e8f5e9);
-}
-QWidget {
-    background-color: transparent;
-    color: #1a1a2e;
-    font-family: 'Segoe UI', 'SF Pro Display', -apple-system, sans-serif;
-}
-QLabel {
-    color: #1a1a2e;
-    font-size: 13px;
-}
-QLabel[styleSheet*="font-size: 18px"] {
-    color: #1a1a2e;
-}
-/* ── Glassmorphism inputs ── */
-QLineEdit, QTextEdit, QTextBrowser {
-    background-color: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: 10px;
-    padding: 8px 12px;
-    color: #1a1a2e;
-    selection-background-color: rgba(99, 102, 241, 0.3);
-}
-QLineEdit:focus, QTextEdit:focus {
-    border: 1.5px solid rgba(99, 102, 241, 0.5);
-    background-color: rgba(255, 255, 255, 0.85);
-}
-/* ── Glassmorphism ComboBox ── */
-QComboBox {
-    background-color: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: 10px;
-    padding: 6px 12px;
-    color: #1a1a2e;
-    font-weight: 500;
-}
-QComboBox:hover {
-    background-color: rgba(255, 255, 255, 0.85);
-    border-color: rgba(99, 102, 241, 0.3);
-}
-QComboBox QAbstractItemView {
-    background-color: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 8px;
-    padding: 4px;
-    selection-background-color: rgba(99, 102, 241, 0.15);
-    selection-color: #1a1a2e;
-    outline: none;
-}
-/* ── Glassmorphism GroupBox ── */
-QGroupBox {
-    font-weight: 600;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 12px;
-    margin-top: 14px;
-    padding-top: 18px;
-    color: #1a1a2e;
-    background-color: rgba(255, 255, 255, 0.35);
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 14px;
-    padding: 0 8px;
-    color: #4a4a6a;
-}
-/* ── Progress bar ── */
-QProgressBar {
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 6px;
-    background-color: rgba(255, 255, 255, 0.5);
-    height: 8px;
-    text-align: center;
-}
-QProgressBar::chunk {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 #6366f1, stop:1 #8b5cf6);
-    border-radius: 5px;
-}
-/* ── Menu bar ── */
-QMenuBar {
-    background-color: rgba(255, 255, 255, 0.6);
-    color: #1a1a2e;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    font-weight: 500;
-}
-QMenuBar::item {
-    padding: 6px 10px;
-    border-radius: 6px;
-}
-QMenuBar::item:selected {
-    background-color: rgba(99, 102, 241, 0.1);
-}
-QMenu {
-    background-color: rgba(255, 255, 255, 0.92);
-    color: #1a1a2e;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 10px;
-    padding: 6px;
-}
-QMenu::item {
-    padding: 7px 24px 7px 12px;
-    border-radius: 6px;
-}
-QMenu::item:selected {
-    background-color: rgba(99, 102, 241, 0.12);
-}
-/* ── Tab widget ── */
-QTabWidget::pane {
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 10px;
-    background-color: rgba(255, 255, 255, 0.4);
-    top: -1px;
-}
-QTabBar::tab {
-    background-color: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    padding: 8px 18px;
-    margin-right: 2px;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    color: #6b7280;
-    font-weight: 500;
-}
-QTabBar::tab:selected {
-    background-color: rgba(255, 255, 255, 0.85);
-    color: #1a1a2e;
-    font-weight: 600;
-    border-bottom: 2px solid #6366f1;
-}
-QTabBar::tab:hover:!selected {
-    background-color: rgba(255, 255, 255, 0.7);
-}
-/* ── Scrollbar ── */
-QScrollBar:vertical {
-    background: transparent;
-    width: 8px;
-    margin: 0;
-}
-QScrollBar::handle:vertical {
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 4px;
-    min-height: 30px;
-}
-QScrollBar::handle:vertical:hover {
-    background: rgba(0, 0, 0, 0.25);
-}
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    height: 0px;
-}
-QScrollBar:horizontal {
-    background: transparent;
-    height: 8px;
-}
-QScrollBar::handle:horizontal {
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 4px;
-    min-width: 30px;
-}
-/* ── Tooltips ── */
-QToolTip {
-    background-color: rgba(26, 26, 46, 0.9);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 12px;
-}
-/* ── Splitter ── */
-QSplitter::handle {
-    background-color: rgba(0, 0, 0, 0.06);
-    width: 2px;
-}
-QSplitter::handle:hover {
-    background-color: rgba(99, 102, 241, 0.3);
-}
-"""
-
-DARK_STYLE = """
-/* ── Dark Glassmorphism Theme (2026) ── */
-QMainWindow {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-        stop:0 #0f0f1a, stop:0.25 #1a0f2e, stop:0.5 #0f1a2e, stop:0.75 #0f2e1a, stop:1 #1a1a2e);
-}
-QWidget {
-    background-color: transparent;
-    color: #e2e8f0;
-    font-family: 'Segoe UI', 'SF Pro Display', -apple-system, sans-serif;
-}
-QLabel {
-    color: #e2e8f0;
-    font-size: 13px;
-}
-/* ── Dark glassmorphism inputs ── */
-QLineEdit, QTextEdit, QTextBrowser {
-    background-color: rgba(30, 30, 50, 0.65);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    padding: 8px 12px;
-    color: #e2e8f0;
-    selection-background-color: rgba(139, 92, 246, 0.35);
-}
-QLineEdit:focus, QTextEdit:focus {
-    border: 1.5px solid rgba(139, 92, 246, 0.5);
-    background-color: rgba(30, 30, 50, 0.8);
-}
-/* ── Dark glassmorphism ComboBox ── */
-QComboBox {
-    background-color: rgba(30, 30, 50, 0.65);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    padding: 6px 12px;
-    color: #e2e8f0;
-    font-weight: 500;
-}
-QComboBox:hover {
-    background-color: rgba(40, 40, 65, 0.8);
-    border-color: rgba(139, 92, 246, 0.3);
-}
-QComboBox QAbstractItemView {
-    background-color: rgba(20, 20, 35, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 8px;
-    padding: 4px;
-    color: #e2e8f0;
-    selection-background-color: rgba(139, 92, 246, 0.2);
-    selection-color: #f0f0ff;
-    outline: none;
-}
-/* ── Dark glassmorphism GroupBox ── */
-QGroupBox {
-    font-weight: 600;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 12px;
-    margin-top: 14px;
-    padding-top: 18px;
-    color: #e2e8f0;
-    background-color: rgba(30, 30, 50, 0.35);
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 14px;
-    padding: 0 8px;
-    color: #a0a0c0;
-}
-/* ── Dark progress bar ── */
-QProgressBar {
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 6px;
-    background-color: rgba(30, 30, 50, 0.5);
-    height: 8px;
-    text-align: center;
-}
-QProgressBar::chunk {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 #8b5cf6, stop:1 #06b6d4);
-    border-radius: 5px;
-}
-/* ── Dark menu bar ── */
-QMenuBar {
-    background-color: rgba(15, 15, 26, 0.7);
-    color: #e2e8f0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    font-weight: 500;
-}
-QMenuBar::item {
-    padding: 6px 10px;
-    border-radius: 6px;
-}
-QMenuBar::item:selected {
-    background-color: rgba(139, 92, 246, 0.12);
-}
-QMenu {
-    background-color: rgba(20, 20, 35, 0.92);
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 10px;
-    padding: 6px;
-}
-QMenu::item {
-    padding: 7px 24px 7px 12px;
-    border-radius: 6px;
-}
-QMenu::item:selected {
-    background-color: rgba(139, 92, 246, 0.15);
-}
-/* ── Dark tab widget ── */
-QTabWidget::pane {
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 10px;
-    background-color: rgba(20, 20, 35, 0.4);
-    top: -1px;
-}
-QTabBar::tab {
-    background-color: rgba(30, 30, 50, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 8px 18px;
-    margin-right: 2px;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    color: #6b7280;
-    font-weight: 500;
-}
-QTabBar::tab:selected {
-    background-color: rgba(30, 30, 50, 0.8);
-    color: #e2e8f0;
-    font-weight: 600;
-    border-bottom: 2px solid #8b5cf6;
-}
-QTabBar::tab:hover:!selected {
-    background-color: rgba(40, 40, 65, 0.6);
-}
-/* ── Dark scrollbar ── */
-QScrollBar:vertical {
-    background: transparent;
-    width: 8px;
-    margin: 0;
-}
-QScrollBar::handle:vertical {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    min-height: 30px;
-}
-QScrollBar::handle:vertical:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    height: 0px;
-}
-QScrollBar:horizontal {
-    background: transparent;
-    height: 8px;
-}
-QScrollBar::handle:horizontal {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    min-width: 30px;
-}
-/* ── Dark tooltips ── */
-QToolTip {
-    background-color: rgba(30, 30, 50, 0.95);
-    color: #e2e8f0;
-    border: 1px solid rgba(139, 92, 246, 0.2);
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 12px;
-}
-/* ── Dark splitter ── */
-QSplitter::handle {
-    background-color: rgba(255, 255, 255, 0.04);
-    width: 2px;
-}
-QSplitter::handle:hover {
-    background-color: rgba(139, 92, 246, 0.3);
-}
-"""
+from src.gui.styles import LIGHT_STYLE, DARK_STYLE
 
 APP_NAME = "MarkdownToPDF_Pro"
 
@@ -455,18 +97,17 @@ class MainWindow(QMainWindow):
         self.goal_celebrated = False
         self.kroki_available = True
         self._last_revision_time = 0
-        self.translator = Translator(self.settings.value("language", "ru", str) if hasattr(self, 'settings') else "ru")
+
+        # Settings persistence
+        self.settings = QSettings(AppConfig.APP_NAME, AppConfig.APP_NAME)
+        self.current_lang = self.settings.value("language", "ru", str)
+        self.translator = Translator(self.current_lang)
+        self.export_history = self.settings.value("export_history", [], list)
 
         # Start Kroki.io connectivity check
         self.kroki_thread = KrokiCheckThread()
         self.kroki_thread.finished.connect(self.on_kroki_check_finished)
         self.kroki_thread.start()
-
-        # Settings persistence
-        self.settings = QSettings(AppConfig.APP_NAME, AppConfig.APP_NAME)
-        self.current_lang = self.settings.value("language", "ru", str)
-        self.translator.set_lang(self.current_lang)
-        self.export_history = self.settings.value("export_history", [], list)
 
         # File watcher for auto-regenerate mode
         self.watcher = QFileSystemWatcher(self)
@@ -550,7 +191,7 @@ class MainWindow(QMainWindow):
         self.multi_cursor = MultiCursorManager(self.live_editor)
 
         # Plugin system - load from plugins dir
-        plugins_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plugins")
+        plugins_dir = os.path.join(AppConfig.base_path(), "plugins")
         os.makedirs(plugins_dir, exist_ok=True)
         load_plugins_from_dir(plugins_dir)
 
@@ -1049,7 +690,7 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
         if not ok or not name:
             return
             
-        # Capture current settings
+        # Capture current settings (password excluded for security)
         opt = self._get_options()
         preset_data = {
             "doc_theme": self.doc_theme_combo.currentIndex(),
@@ -1119,8 +760,8 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
         if args:
             try:
                 return text.format(*args)
-            except Exception:
-                pass
+            except (KeyError, IndexError, AttributeError) as e:
+                logger.warning("Translation format error for key '%s': %s", key, e)
         return text
 
     def change_lang(self, lang_code: str):
@@ -1149,8 +790,8 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
                 self.action_update_toc.setText(t('menu_update_toc'))
                 self.action_audit.setText(t('menu_audit'))
                 self.action_format.setText(t('menu_format'))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Menu retranslation failed: %s", e)
             
         self.btn_theme.setText(t('btn_theme_light') if self.is_dark else t('btn_theme_dark'))
         
@@ -1448,7 +1089,9 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
             return
         try:
             import subprocess
-            subprocess.run(["explorer", "/select,", os.path.normpath(filepath)])
+            subprocess.run(["explorer", "/select,", os.path.normpath(filepath)], timeout=10)
+        except subprocess.TimeoutExpired:
+            logger.warning("Explorer open timed out for %s", filepath)
         except Exception as e:
             logger.error("Failed to open folder for %s: %s", filepath, e)
 
@@ -1496,23 +1139,6 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
 
     def auto_fix_document_issues(self):
         document_tools.auto_fix_document_issues(self)
-
-    def show_toc_generator(self):
-        document_tools.show_toc_generator(self)
-
-    def update_markdown_toc_in_editor(self):
-        document_tools.update_markdown_toc_in_editor(self)
-
-    def show_table_generator_dialog(self):
-        document_tools.show_table_generator_dialog(self)
-
-    def show_snippets_dialog(self):
-        from src.gui.dialogs import SnippetsManagerDialog
-        dlg = SnippetsManagerDialog(self, self.current_lang)
-        if dlg.exec() and dlg.selected_code:
-            cursor = self.live_editor.textCursor()
-            cursor.insertText(dlg.selected_code)
-            self.live_editor.setTextCursor(cursor)
 
     def show_doc_templates_dialog(self):
         from src.gui.templates_data import get_template_list, get_template_content
@@ -1562,14 +1188,12 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
             self.btn_split_view.setText(labels[self._split_view_mode])
 
     def toggle_wysiwyg(self):
-        """Toggle simplified WYSIWYG mode - show rendered preview inline."""
         if not hasattr(self, '_wysiwyg_active'):
             self._wysiwyg_active = False
 
         self._wysiwyg_active = not self._wysiwyg_active
 
         if self._wysiwyg_active:
-            # Hide editor, show preview full width
             self.editor_splitter.setSizes([0, 0, 1])
             self.live_editor.hide()
             self.preview_output.show()
@@ -1577,7 +1201,6 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
             if hasattr(self, 'btn_wysiwyg'):
                 self.btn_wysiwyg.setText("📝 MD")
         else:
-            # Restore split view
             self.editor_splitter.setSizes([0, 400, 400])
             self.live_editor.show()
             self.preview_output.show()
@@ -1610,21 +1233,6 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
         btn_close.clicked.connect(dlg.close)
         layout.addWidget(btn_close)
         dlg.exec()
-
-    def show_readability_dashboard(self):
-        document_tools.show_readability_dashboard(self)
-
-    def show_design_style_dialog(self):
-        document_tools.show_design_style_dialog(self)
-
-    def show_merge_dialog(self):
-        document_tools.show_merge_dialog(self)
-
-    def show_stats_menu(self):
-        document_tools.show_stats_menu(self)
-
-    def set_writing_goal(self):
-        document_tools.set_writing_goal(self)
 
     def show_toc_generator(self):
         dialog = MarkdownTOCDialog(parent=self, lang=self.current_lang)
@@ -1898,7 +1506,6 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
         for path in history[:20]:
             if os.path.exists(path):
                 mtime = os.path.getmtime(path)
-                from datetime import datetime
                 dt = datetime.fromtimestamp(mtime).strftime("%d.%m.%Y %H:%M")
                 items.append(f"{os.path.basename(path)}  ({dt})")
 
@@ -1997,7 +1604,6 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
             self._versions = []
 
         text = self.live_editor.toPlainText()
-        from datetime import datetime
         version = {
             'label': label or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'content': text,
@@ -2335,9 +1941,6 @@ body{{font-family:sans-serif;padding:20px;}}
 
     def show_stats_menu(self):
         document_tools.show_stats_menu(self)
-
-    def set_writing_goal(self):
-        document_tools.set_writing_goal(self)
 
     def show_snippets_dialog(self):
         document_tools.show_snippets_dialog(self)
@@ -2852,14 +2455,7 @@ body{{font-family:sans-serif;padding:20px;}}
         btn = QPushButton("Close")
         btn.clicked.connect(dlg.close)
         layout.addWidget(btn)
-        dlg.exec()
-
-
-# ─── CSS Theme / Document Builder / Readability Utilities ───
-
-def estimate_readability(text: str, lang: str):
-    from src.gui.document_tools import estimate_readability as _est
-    return _est(text, lang)
+        dlg.exec(    )
 
 
 def _get_options(window) -> ConversionOptions:
@@ -2879,6 +2475,3 @@ def _get_options(window) -> ConversionOptions:
         is_presentation=window.chk_presentation_mode.isChecked(),
         compress=window.chk_compress.isChecked(),
     )
-
-
-from PyQt6.QtWidgets import QListWidget, QFileDialog, QGroupBox

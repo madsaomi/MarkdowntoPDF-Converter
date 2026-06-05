@@ -27,10 +27,8 @@ def load_settings(window):
     window.combo_page_format.setEnabled(window.chk_page_numbers.isChecked())
     window.chk_presentation_mode.setChecked(window.settings.value("presentation_mode", False, bool))
     if window.is_dark:
-        QApplication.instance().setStyleSheet(window.__class__._dark_style if hasattr(window.__class__, '_dark_style') else "")
         window.btn_theme.setText("☀️ Светлая тема")
     else:
-        QApplication.instance().setStyleSheet(window.__class__._light_style if hasattr(window.__class__, '_light_style') else "")
         window.btn_theme.setText("🌙 Тёмная тема")
     window.update_recent_menu()
 

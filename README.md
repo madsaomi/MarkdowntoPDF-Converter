@@ -1,6 +1,6 @@
 # Markdown to PDF Converter Pro
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.14+-blue.svg)
 ![PyQt6](https://img.shields.io/badge/GUI-PyQt6-green.svg)
 ![WeasyPrint](https://img.shields.io/badge/PDF_Engine-WeasyPrint-red.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
@@ -25,7 +25,7 @@ Desktop application for converting Markdown to PDF, DOCX, HTML, EPUB, PPTX, Reve
 | EPUB | ebooklib | E-book format |
 | PPTX | python-pptx | PowerPoint presentations |
 | Reveal.js | Built-in | HTML presentations |
-| PNG/JPG | WeasyPrint | Image export |
+| PNG/JPG | WeasyPrint + PyMuPDF | Image export via PDF intermediate |
 
 ### PDF Features
 - Page themes (modern, classic, presentation)
@@ -34,7 +34,7 @@ Desktop application for converting Markdown to PDF, DOCX, HTML, EPUB, PPTX, Reve
 - Watermark text
 - Custom footer with variables: `{date}`, `{filename}`, `{title}`, `{word_count}`, `{time}`
 - PDF encryption with password
-- Table of contents with dot leaders
+- Page numbers with custom format (simple, slash, text)
 
 ### Tools
 - Markdown linter (12 rules)
@@ -58,13 +58,12 @@ Desktop application for converting Markdown to PDF, DOCX, HTML, EPUB, PPTX, Reve
 - Watermark designer
 
 ### UI
-- Glassmorphism dark/light themes
+- Dark/light themes
 - Animated splash screen
 - Custom title bar
 - Toast notifications
 - About dialog
 - Feature tour
-- Ambient glow background
 - Zen mode
 - Keyboard shortcuts (Ctrl+/)
 - Drag & drop files
@@ -77,31 +76,50 @@ Desktop application for converting Markdown to PDF, DOCX, HTML, EPUB, PPTX, Reve
 
 ### Requirements
 - Python 3.10+
-- Windows 10/11 (for bundled WeasyPrint)
+- Windows 10/11 (WeasyPrint standalone binary)
 
 ### Setup
-```bash
-git clone https://github.com/yourusername/markdown-to-pdf-converter.git
-cd markdown-to-pdf-converter
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-python main.py
-```
+
+1. **Clone and create virtual environment:**
+   ```bash
+   git clone https://github.com/yourusername/markdown-to-pdf-converter.git
+   cd markdown-to-pdf-converter
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+
+2. **Install Python dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Download WeasyPrint Windows binary:**
+   - Download `weasyprint-windows.zip` from the [latest GitHub release](https://github.com/Kozea/WeasyPrint/releases/latest)
+   - Extract `weasyprint.exe` to `weasyprint-windows/dist/weasyprint.exe`
+
+4. **Launch:**
+   ```bash
+   python main.py
+   ```
 
 ## CLI Mode
 
-Run without GUI for automation:
+Run without GUI for automation (PyQt6 not required):
 
 ```bash
 python main.py test.md -f pdf --theme modern -m "20mm 15mm" -p "password"
+```
+
+```bash
+python main.py input.md -f png --page-numbers  # Export as images
+python main.py doc1.md doc2.md --theme classic  # Batch convert
 ```
 
 | Argument | Description | Default |
 |----------|-------------|---------|
 | `input_files` | Markdown files to convert | Required |
 | `-o`, `--output-dir` | Output directory | Same as input |
-| `-f`, `--format` | Output format (pdf/docx/html/epub/pptx/png/jpg) | pdf |
+| `-f`, `--format` | Output format (pdf/docx/html/epub/pptx/png/jpg/reveal) | pdf |
 | `--theme` | Document theme (modern/classic) | modern |
 | `--code-theme` | Code highlighting (light/dark) | light |
 | `--paper` | Page size (A4/Letter/Legal/A3/A5) | A4 |
@@ -111,6 +129,9 @@ python main.py test.md -f pdf --theme modern -m "20mm 15mm" -p "password"
 | `-p`, `--password` | PDF encryption password | None |
 | `--docx-template` | Reference DOCX template | None |
 | `--custom-css` | Custom CSS file | None |
+| `--page-numbers` | Enable page numbers | off |
+| `--page-format` | Numbering format (simple/slash/text) | simple |
+| `--lang` | Language for numbering (ru/en) | ru |
 
 ## Project Structure
 
@@ -127,13 +148,13 @@ markdown-to-pdf-converter/
 ├── src/
 │   ├── core/                # Business logic
 │   │   ├── parser.py        # Markdown parser
-│   │   ├── renderer.py      # PDF generator
+│   │   ├── renderer.py      # PDF generator (WeasyPrint subprocess)
 │   │   ├── docx_renderer.py # DOCX export
 │   │   ├── epub_renderer.py # EPUB export
 │   │   ├── pptx_renderer.py # PPTX export
-│   │   ├── image_renderer.py# PNG/JPG export
+│   │   ├── image_renderer.py# PNG/JPG export (WeasyPrint + PyMuPDF)
 │   │   ├── reveal_exporter.py# Reveal.js export
-│   │   ├── pdf_encrypt.py   # PDF encryption
+│   │   ├── pdf_encrypt.py   # PDF encryption (pypdf)
 │   │   ├── pdf_to_markdown.py# PDF extraction
 │   │   ├── linter.py        # Markdown linter
 │   │   ├── snippets.py      # Code snippets
@@ -154,19 +175,22 @@ markdown-to-pdf-converter/
 │   │   ├── multi_export.py  # Batch export
 │   │   └── config.py        # App config
 │   └── gui/                 # PyQt6 interface
-│       ├── main_window.py   # Main window (494+ methods)
+│       ├── main_window.py   # Main window (~2380 lines)
+│       ├── styles.py        # UI theme CSS (LIGHT_STYLE, DARK_STYLE)
 │       ├── ui_layout.py     # UI layout
 │       ├── dialogs.py       # All dialogs
-│       ├── translations.py  # RU/EN localization
+│       ├── translations.py  # RU/EN localization (254 keys each)
 │       ├── highlighter.py   # Syntax highlighting
 │       ├── models.py        # Data models
 │       ├── threads.py       # Background threads
 │       ├── toast.py         # Toast notifications
 │       └── ...              # 20+ GUI modules
 ├── plugins/                 # User plugins
-├── weasyprint-windows/      # Bundled WeasyPrint
-├── main.py                  # Entry point
-├── build.py                 # Build script
+├── weasyprint-windows/
+│   └── dist/
+│       └── weasyprint.exe   # Standalone binary (download separately)
+├── main.py                  # Entry point (CLI + GUI)
+├── build.py                 # PyInstaller build script
 ├── installer.iss            # Inno Setup installer
 ├── requirements.txt
 └── LICENSE

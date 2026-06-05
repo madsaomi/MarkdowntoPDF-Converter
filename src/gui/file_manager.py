@@ -210,7 +210,7 @@ def save_current_workspace_file(window):
             content = window.live_editor.toPlainText()
             with open(window.current_workspace_file, "w", encoding="utf-8") as f:
                 f.write(content)
-            from src.gui.main_window import save_revision
+            from src.gui.document_tools import save_revision
             save_revision(window)
         except Exception as e:
             logger.error("Failed to save workspace file: %s", e)

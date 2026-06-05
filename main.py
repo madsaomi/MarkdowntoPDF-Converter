@@ -1,9 +1,7 @@
 import os
 import sys
 import argparse
-from PyQt6.QtWidgets import QApplication
 from src.config import AppConfig
-from src.gui.main_window import MainWindow, LIGHT_STYLE
 from src.core.parser import MarkdownParser
 from src.core.renderer import PDFRenderer
 from src.core.docx_renderer import DOCXRenderer
@@ -152,6 +150,10 @@ def main():
     if len(sys.argv) > 1:
         run_cli(sys.argv[1:])
     else:
+        from PyQt6.QtWidgets import QApplication
+        from src.gui.main_window import MainWindow
+        from src.gui.styles import LIGHT_STYLE
+
         app = QApplication(sys.argv)
         app.setStyleSheet(LIGHT_STYLE)
         

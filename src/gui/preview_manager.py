@@ -145,8 +145,9 @@ def render_live_preview(window):
                 </style></head><body>{html}</body></html>
                 """
         window.preview_output.setHtml(preview_html)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error("Live preview render failed: %s", e, exc_info=True)
+        window.preview_output.setHtml(f"<p style='color:red;'>Preview error: {e}</p>")
 
 
 def sync_scroll_preview(window, value):

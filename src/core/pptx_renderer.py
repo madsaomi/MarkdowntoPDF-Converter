@@ -3,8 +3,79 @@
 import os
 import re
 import logging
+from html.parser import HTMLParser
 
 logger = logging.getLogger("MarkdownToPDF.pptx_renderer")
+
+
+class _SlideParser(HTMLParser):
+    """HTML parser that splits content into slides by h1/h2 headings."""
+    def __init__(self):
+        super().__init__()
+        self.slides = []
+        self._current_title = None
+        self._current_content = []
+        self._in_heading = False
+        self._skip_depth = 0
+
+    def handle_starttag(self, tag, attrs):
+        tag_lower = tag.lower()
+        if tag_lower in ('h1', 'h2') and self._skip_depth == 0:
+            self._in_heading = True
+            self._current_title = ''
+            if self._current_content:
+                self._flush_content()
+        elif self._in_heading:
+            pass
+        elif tag_lower in ('script', 'style'):
+            self._skip_depth += 1
+        else:
+            pass
+
+    def handle_endtag(self, tag):
+        tag_lower = tag.lower()
+        if tag_lower in ('script', 'style'):
+            if self._skip_depth > 0:
+                self._skip_depth -= 1
+        elif tag_lower in ('h1', 'h2'):
+            if self._in_heading:
+                self._in_heading = False
+                title = self._current_title.strip() if self._current_title else ''
+                if title:
+                    self.slides.append({'title': title, 'content': []})
+                self._current_title = None
+        elif tag_lower in ('p', 'li', 'tr', 'div', 'pre', 'blockquote'):
+            if not self._in_heading and self._skip_depth == 0:
+                self._current_content.append('')
+
+    def handle_data(self, data):
+        if self._skip_depth > 0:
+            return
+        if self._in_heading:
+            if self._current_title is not None:
+                self._current_title += data
+        else:
+            text = data.strip()
+            if text:
+                if self._current_content and self._current_content[-1] != '':
+                    self._current_content[-1] += ' ' + text
+                else:
+                    self._current_content.append(text)
+
+    def handle_entityref(self, name):
+        if self._in_heading and self._current_title is not None:
+            self._current_title += f'&{name};'
+
+    def handle_charref(self, name):
+        if self._in_heading and self._current_title is not None:
+            self._current_title += f'&#{name};'
+
+    def _flush_content(self):
+        if self._current_content:
+            joined = ' '.join(self._current_content).strip()
+            if joined:
+                self.slides[-1]['content'] = [joined]
+            self._current_content = []
 
 
 class PPTXRenderer:
@@ -20,13 +91,11 @@ class PPTXRenderer:
         try:
             from pptx import Presentation
             from pptx.util import Inches, Pt, Emu
-            from pptx.enum.text import PP_ALIGN
         except ImportError:
             raise ImportError("python-pptx is required for PPTX export. Install with: pip install python-pptx")
 
         prs = Presentation()
 
-        # Set slide size (16:9 default)
         if slide_width and slide_height:
             prs.slide_width = Emu(slide_width)
             prs.slide_height = Emu(slide_height)
@@ -34,14 +103,12 @@ class PPTXRenderer:
             prs.slide_width = Inches(13.333)
             prs.slide_height = Inches(7.5)
 
-        # Parse HTML to extract slides
         slides = self._parse_slides(html_content, metadata)
 
         for slide_data in slides:
-            slide_layout = prs.slide_layouts[1]  # Title and Content layout
+            slide_layout = prs.slide_layouts[1]
             slide = prs.slides.add_slide(slide_layout)
 
-            # Set title
             title_shape = slide.shapes.title
             if title_shape:
                 title_shape.text = slide_data.get('title', '')
@@ -49,7 +116,6 @@ class PPTXRenderer:
                     paragraph.font.size = Pt(32)
                     paragraph.font.bold = True
 
-            # Set body content
             body_shape = slide.placeholders[1]
             if body_shape and slide_data.get('content'):
                 text_frame = body_shape.text_frame
@@ -63,16 +129,14 @@ class PPTXRenderer:
                     p.font.size = Pt(18)
                     p.space_after = Pt(6)
 
-                    # Detect list items
                     if re.match(r'^[-*+]\s', line):
                         p.text = re.sub(r'^[-*+]\s', '• ', line)
                     elif re.match(r'^\d+\.\s', line):
-                        pass  # Keep numbered
+                        pass
                     elif line.startswith('#'):
                         p.font.bold = True
                         p.font.size = Pt(24)
 
-        # Ensure output directory exists
         out_dir = os.path.dirname(output_path)
         if out_dir:
             os.makedirs(out_dir, exist_ok=True)
@@ -82,10 +146,9 @@ class PPTXRenderer:
         return len(prs.slides)
 
     def _parse_slides(self, html_content: str, metadata: dict) -> list:
-        """Parse HTML content into slide data (title + content)."""
+        """Parse HTML content into slide data using HTMLParser."""
         slides = []
 
-        # Add title slide
         title = metadata.get('title', '')
         author = metadata.get('author', '')
         if title:
@@ -94,28 +157,13 @@ class PPTXRenderer:
                 'content': [f"by {author}"] if author else []
             })
 
-        # Split by h1 and h2 headings
-        parts = re.split(r'<h[12][^>]*>(.*?)</h[12]>', html_content, flags=re.DOTALL)
+        parser = _SlideParser()
+        parser.feed(html_content)
 
-        if len(parts) > 1:
-            # First part is content before first heading (skip if empty)
-            for i in range(1, len(parts), 2):
-                heading = re.sub(r'<[^>]+>', '', parts[i]).strip()
-                body = parts[i + 1] if i + 1 < len(parts) else ''
+        for s in parser.slides:
+            slides.append(s)
 
-                # Clean HTML tags from body
-                body_clean = re.sub(r'<[^>]+>', ' ', body)
-                body_clean = re.sub(r'\s+', ' ', body_clean).strip()
-
-                # Split into lines for bullet points
-                lines = [l.strip() for l in body_clean.split('\n') if l.strip()]
-
-                slides.append({
-                    'title': heading,
-                    'content': lines[:20]  # Limit content per slide
-                })
-        else:
-            # No headings found, create single slide
+        if not parser.slides:
             body_clean = re.sub(r'<[^>]+>', ' ', html_content)
             body_clean = re.sub(r'\s+', ' ', body_clean).strip()
             lines = [l.strip() for l in body_clean.split('\n') if l.strip()]

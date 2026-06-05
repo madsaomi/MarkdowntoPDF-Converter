@@ -11,7 +11,7 @@ class AppConfig:
     def base_path() -> str:
         if getattr(sys, 'frozen', False):
             return sys._MEIPASS
-        return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        return os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
     @staticmethod
     def template_dir() -> str:

@@ -103,11 +103,12 @@ class PDFRenderer:
         )
 
         # Determine base URL for relative resources
+        from urllib.parse import quote
         if input_filepath:
             md_dir = os.path.dirname(os.path.abspath(input_filepath))
-            base_url = f"file:///{md_dir.replace(os.sep, '/')}/"
+            base_url = "file:///" + quote(md_dir.replace(os.sep, '/'), safe='/:') + "/"
         else:
-            base_url = f"file:///{os.path.abspath(self.template_dir).replace(os.sep, '/')}/"
+            base_url = "file:///" + quote(os.path.abspath(self.template_dir).replace(os.sep, '/'), safe='/:') + "/"
 
         # Resolve WeasyPrint executable path
         wp_exe = self.wp_executable
@@ -121,7 +122,6 @@ class PDFRenderer:
 
         temp_err_path = None
         try:
-            import time
             fd_err, temp_err_path = tempfile.mkstemp(suffix='.log', text=True)
             with os.fdopen(fd_err, 'w+', encoding='utf-8') as stderr_file:
                 process = subprocess.Popen([
@@ -152,12 +152,12 @@ class PDFRenderer:
             try:
                 os.remove(temp_html_path)
             except Exception:
-                pass
+                logger.warning("Failed to remove temp HTML: %s", temp_html_path)
             if temp_err_path:
                 try:
                     os.remove(temp_err_path)
                 except Exception:
-                    pass
+                    logger.warning("Failed to remove temp log: %s", temp_err_path)
 
         # Post-process: compress PDF if requested
         if compress:
