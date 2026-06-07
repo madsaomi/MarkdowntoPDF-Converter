@@ -250,12 +250,28 @@ class MarkdownParser:
             
         return img_pattern.sub(replace_img, html)
 
+    def _ensure_table_spacing(self, text: str) -> str:
+        lines = text.split('\n')
+        result = []
+        in_code = False
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped.startswith('```'):
+                in_code = not in_code
+            if not in_code and stripped.startswith('|') and i > 0:
+                prev = lines[i - 1].strip()
+                if prev and not prev.startswith('|') and not prev.startswith('```'):
+                    result.append('')
+            result.append(line)
+        return '\n'.join(result)
+
     def parse(self, text: str, base_dir: Optional[str] = None, is_presentation: bool = False, kroki_available: bool = True) -> Tuple[str, Dict[str, Any]]:
         """
         Parses Markdown text into HTML and extracts YAML metadata.
         Returns a tuple of (html_string, metadata_dict).
         """
         self.kroki_available = kroki_available
+        text = self._ensure_table_spacing(text)
         if is_presentation:
             lines = text.splitlines()
             slides_md = []

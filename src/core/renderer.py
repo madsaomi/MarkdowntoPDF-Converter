@@ -121,13 +121,18 @@ class PDFRenderer:
             f.write(rendered_html)
 
         temp_err_path = None
+        temp_pdf_path = None
         try:
             fd_err, temp_err_path = tempfile.mkstemp(suffix='.log', text=True)
+            fd_pdf, temp_pdf_path = tempfile.mkstemp(suffix='.pdf')
+            os.close(fd_pdf)
+            output_dir = os.path.dirname(os.path.abspath(output_path))
+            os.makedirs(output_dir, exist_ok=True)
             with os.fdopen(fd_err, 'w+', encoding='utf-8') as stderr_file:
                 process = subprocess.Popen([
                     wp_exe,
                     temp_html_path,
-                    output_path,
+                    temp_pdf_path,
                     '--base-url', base_url,
                     '--encoding', 'utf-8'
                 ], stdout=subprocess.DEVNULL, stderr=stderr_file, text=True)
@@ -136,18 +141,24 @@ class PDFRenderer:
                 while process.poll() is None:
                     if cancel_flag and cancel_flag():
                         process.kill()
+                        process.wait()
                         raise RuntimeError("Конвертация отменена пользователем" if lang == 'ru' else "Conversion cancelled by user")
                     
                     if time.time() - start_time > 1800:
                         process.kill()
+                        process.wait()
                         raise RuntimeError("Ошибка WeasyPrint: превышено время ожидания (таймаут 1800 сек)." if lang == 'ru' else "WeasyPrint Error: Timeout exceeded (1800s).")
                     
                     time.sleep(0.5)
     
+                process.wait()
                 if process.returncode != 0:
                     stderr_file.seek(0)
                     stderr = stderr_file.read()
                     raise RuntimeError(f"Ошибка WeasyPrint:\n{stderr}" if lang == 'ru' else f"WeasyPrint Error:\n{stderr}")
+            # Copy temp PDF to final destination, then remove temp
+            import shutil
+            shutil.copy2(temp_pdf_path, output_path)
         finally:
             try:
                 os.remove(temp_html_path)
@@ -158,6 +169,11 @@ class PDFRenderer:
                     os.remove(temp_err_path)
                 except Exception:
                     logger.warning("Failed to remove temp log: %s", temp_err_path)
+            if temp_pdf_path:
+                try:
+                    os.remove(temp_pdf_path)
+                except Exception:
+                    logger.warning("Failed to remove temp PDF: %s", temp_pdf_path)
 
         # Post-process: compress PDF if requested
         if compress:

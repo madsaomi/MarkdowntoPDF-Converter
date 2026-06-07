@@ -114,7 +114,7 @@ class ConversionThread(QThread):
                         html_content, metadata, output_file,
                         doc_theme_css, code_theme_css,
                         opt.paper_size, self.lang, fmt,
-                        cancel_flag=lambda: self._is_cancelled
+                        cancel_flag=self.is_cancelled
                     )
                     self.log.emit(t("log_saved", f"{output_file} ({count} pages)"))
                 elif opt.export_format == ExportFormat.HTML:
@@ -138,7 +138,7 @@ class ConversionThread(QThread):
                         opt.paper_size, opt.watermark, opt.footer_text,
                         input_file, opt.custom_css, opt.margins,
                         page_numbers=opt.page_numbers, page_num_format=opt.page_num_format, lang=self.lang,
-                        cancel_flag=lambda: self._is_cancelled,
+                        cancel_flag=self.is_cancelled,
                         compress=opt.compress, word_count=word_count
                     )
                     

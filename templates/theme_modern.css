@@ -1,18 +1,16 @@
-/* Google Noto Fonts: Support for English, Russian, Chinese, Japanese, Korean, and Emojis */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans+SC&family=Noto+Sans+TC&family=Noto+Sans+JP&family=Noto+Sans+KR&family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-
+/* System fonts with CJK fallbacks for offline PDF rendering */
 @page {
     size: A4;
     margin: 2cm;
     @bottom-right {
         content: counter(page);
-        font-family: "Noto Sans", sans-serif;
+        font-family: "Segoe UI", "Microsoft YaHei", "Yu Gothic", "Malgun Gothic", "Segoe UI Emoji", sans-serif;
         font-size: 9pt;
         color: #7f8c8d;
     }
     @bottom-left {
         content: string(doctitle);
-        font-family: "Noto Sans", sans-serif;
+        font-family: "Segoe UI", "Microsoft YaHei", "Yu Gothic", "Malgun Gothic", "Segoe UI Emoji", sans-serif;
         font-size: 9pt;
         color: #7f8c8d;
     }
@@ -29,14 +27,14 @@
 }
 
 body {
-    font-family: "Noto Sans", "Noto Sans SC", "Noto Sans JP", "Noto Sans KR", "Noto Color Emoji", sans-serif;
+    font-family: "Segoe UI", "Microsoft YaHei", "Microsoft JhengHei", "Yu Gothic", "Malgun Gothic", "Segoe UI Emoji", sans-serif;
     color: var(--text-color);
     line-height: 1.6;
     font-size: 11pt;
 }
 
 h1 {
-    font-family: "Noto Sans", sans-serif;
+    font-family: "Segoe UI", "Microsoft YaHei", "Yu Gothic", sans-serif;
     color: var(--heading-color);
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 0.3em;
@@ -44,7 +42,7 @@ h1 {
 }
 
 h2, h3, h4, h5, h6 {
-    font-family: "Noto Sans", sans-serif;
+    font-family: "Segoe UI", "Microsoft YaHei", "Yu Gothic", sans-serif;
     color: var(--heading-color);
     margin-top: 1.5em;
     margin-bottom: 0.5em;
@@ -155,7 +153,7 @@ img {
 .toc::before {
     content: "Содержание / Table of Contents";
     display: block;
-    font-family: "Noto Sans", sans-serif;
+    font-family: "Segoe UI", "Microsoft YaHei", "Yu Gothic", sans-serif;
     font-size: 1.3em;
     font-weight: bold;
     color: var(--heading-color);
@@ -172,7 +170,7 @@ img {
 
 .toc li {
     margin-bottom: 0.6em;
-    font-family: "Noto Sans", sans-serif;
+    font-family: "Segoe UI", "Microsoft YaHei", "Yu Gothic", sans-serif;
     font-size: 10.5pt;
 }
 

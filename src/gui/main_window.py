@@ -51,7 +51,7 @@ from src.gui.dialogs import (
     MarkdownTOCDialog, SnippetsDialog, MarkdownTableDialog, ColorButton,
     PDFStyleEditorDialog, RevisionHistoryDialog
 )
-from src.gui import editor_commands, file_manager, preview_manager, document_tools, settings_manager
+from src.gui import editor_commands, file_manager, preview_manager, document_tools
 from src.gui.multi_cursor import MultiCursorManager
 from src.core.template_vars import process_document_vars
 from src.core.plugin_system import load_plugins_from_dir, emit_hook

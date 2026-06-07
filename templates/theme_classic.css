@@ -1,12 +1,10 @@
-/* Google Noto Fonts: Support for English, Russian, Chinese, Japanese, Korean, and Emojis */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Serif+SC&family=Noto+Serif+TC&family=Noto+Serif+JP&family=Noto+Serif+KR&family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-
+/* System fonts with CJK fallbacks for offline PDF rendering */
 @page {
     size: A4;
     margin: 2.5cm;
     @bottom-center {
         content: counter(page);
-        font-family: "Noto Serif", serif;
+        font-family: "Georgia", "SimSun", "Yu Mincho", "Batang", serif;
         font-size: 10pt;
         color: #333;
     }
@@ -23,7 +21,7 @@
 }
 
 body {
-    font-family: "Noto Serif", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", "Noto Color Emoji", serif;
+    font-family: "Georgia", "SimSun", "Yu Mincho", "Batang", serif;
     color: var(--text-color);
     line-height: 1.5;
     font-size: 12pt;
@@ -31,7 +29,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: "Noto Serif", serif;
+    font-family: "Georgia", "SimSun", "Yu Mincho", serif;
     color: var(--heading-color);
     margin-top: 1.5em;
     margin-bottom: 0.5em;
@@ -134,7 +132,7 @@ img {
 .toc::before {
     content: "Содержание / Table of Contents";
     display: block;
-    font-family: "Noto Serif", serif;
+    font-family: "Georgia", "SimSun", "Yu Mincho", serif;
     font-size: 1.4em;
     font-weight: bold;
     color: var(--heading-color);
@@ -152,7 +150,7 @@ img {
 
 .toc li {
     margin-bottom: 0.5em;
-    font-family: "Noto Serif", serif;
+    font-family: "Georgia", "SimSun", "Yu Mincho", serif;
     font-size: 11pt;
 }
 

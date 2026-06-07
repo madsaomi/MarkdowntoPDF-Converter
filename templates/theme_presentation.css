@@ -1,5 +1,4 @@
-/* Google Fonts: Support for elegant Outfit, Inter, and Noto characters */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;600&family=Noto+Sans:wght@400;700&family=Noto+Color+Emoji&display=swap');
+/* System fonts for offline PDF presentation rendering */
 
 @page {
     size: A4 landscape;
@@ -26,7 +25,7 @@
     background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
     color: var(--text-color);
     position: relative;
-    font-family: 'Outfit', 'Inter', 'Noto Sans', sans-serif;
+    font-family: 'Segoe UI', 'Arial', 'Microsoft YaHei', 'Yu Gothic', 'Segoe UI Emoji', sans-serif;
     overflow: hidden;
 }
 
@@ -53,7 +52,7 @@
 
 /* Slide Typography */
 .slide h1 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Segoe UI Black', 'Arial Black', sans-serif;
     font-size: 34pt;
     font-weight: 800;
     color: var(--heading-color);
@@ -67,7 +66,7 @@
 }
 
 .slide h2 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
     font-size: 24pt;
     font-weight: 600;
     color: var(--subheading-color);
@@ -80,7 +79,7 @@
 }
 
 .slide h3, .slide h4, .slide h5, .slide h6 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
     font-size: 18pt;
     font-weight: 600;
     color: #a855f7;
@@ -89,7 +88,7 @@
 }
 
 .slide p, .slide li {
-    font-family: 'Inter', 'Noto Sans', sans-serif;
+    font-family: 'Segoe UI', 'Arial', 'Microsoft YaHei', 'Yu Gothic', sans-serif;
     font-size: 15pt;
     line-height: 1.6;
     color: #e2e8f0;

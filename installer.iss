@@ -1,7 +1,7 @@
 [Setup]
 AppName=Markdown to PDF Converter Pro
 AppVersion=1.0.0
-DefaultDirName={pf}\MarkdownToPDF
+DefaultDirName={autopf}\MarkdownToPDF
 DefaultGroupName=MarkdownToPDF
 OutputDir=dist
 OutputBaseFilename=MarkdownToPDF_Setup
@@ -15,7 +15,7 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "dist\MarkdownToPDF\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "MarkdownToPDF.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\MarkdownToPDF"; Filename: "{app}\MarkdownToPDF.exe"

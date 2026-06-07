@@ -65,12 +65,15 @@ class ImageRenderer:
                 while process.poll() is None:
                     if cancel_flag and cancel_flag():
                         process.kill()
+                        process.wait()
                         raise RuntimeError("Конвертация отменена пользователем" if lang == 'ru' else "Conversion cancelled by user")
                     if time.time() - start_time > 300:
                         process.kill()
+                        process.wait()
                         raise RuntimeError("Timeout")
                     time.sleep(0.3)
 
+                process.wait()
                 if process.returncode != 0:
                     stderr_file.seek(0)
                     stderr = stderr_file.read()

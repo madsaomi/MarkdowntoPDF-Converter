@@ -207,7 +207,8 @@ class PluginManagerDialog(QDialog):
 
     def _open_plugins_dir(self):
         import subprocess
-        plugins_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plugins")
+        from src.config import AppConfig
+        plugins_dir = os.path.join(AppConfig.base_path(), "plugins")
         os.makedirs(plugins_dir, exist_ok=True)
         subprocess.run(["explorer", os.path.normpath(plugins_dir)])
 
@@ -797,8 +798,9 @@ class DocumentAuditorDialog(QDialog):
             self.reject()
 
     def on_autofix_clicked(self):
-        if self.parent():
-            self.parent().auto_fix_document_issues()
+        parent = self.parent()
+        if parent and hasattr(parent, 'auto_fix_document_issues'):
+            parent.auto_fix_document_issues()
         self.accept()
 
 

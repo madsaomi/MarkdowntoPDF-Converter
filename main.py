@@ -18,7 +18,7 @@ def run_cli(args):
         description=f"Markdown to PDF/DOCX Converter Pro CLI v{__version__} (Headless Mode)"
     )
     parser.add_argument("input_files", nargs="+", help="Markdown (.md) files to convert")
-    parser.add_argument("-o", "--output-dir", help="Output directory (defaults to input file's directory)")
+    parser.add_argument("-o", "--output", help="Output file path (defaults to input filename + format extension in input file's directory)")
     parser.add_argument("-f", "--format", choices=["pdf", "docx", "html", "epub", "png", "jpg", "pptx", "reveal"], default="pdf", help="Output format (default: pdf)")
     parser.add_argument("--theme", choices=["modern", "classic"], default="modern", help="Document theme (default: modern)")
     parser.add_argument("--code-theme", choices=["light", "dark"], default="light", help="Code highlights theme (default: light)")
@@ -80,12 +80,13 @@ def run_cli(args):
             )
             
             # Resolve output path
-            out_dir = parsed.output_dir if parsed.output_dir else os.path.dirname(os.path.abspath(infile))
-            if not os.path.exists(out_dir):
-                os.makedirs(out_dir, exist_ok=True)
-                
-            base_name = os.path.splitext(os.path.basename(infile))[0]
-            out_file = os.path.join(out_dir, f"{base_name}.{parsed.format}")
+            if parsed.output:
+                out_file = os.path.abspath(parsed.output)
+            else:
+                out_dir = os.path.dirname(os.path.abspath(infile))
+                base_name = os.path.splitext(os.path.basename(infile))[0]
+                out_file = os.path.join(out_dir, f"{base_name}.{parsed.format}")
+            os.makedirs(os.path.dirname(out_file), exist_ok=True)
             
             if parsed.format == "docx":
                 renderer = DOCXRenderer()
@@ -148,7 +149,7 @@ def run_cli(args):
 
 def main():
     if len(sys.argv) > 1:
-        run_cli(sys.argv[1:])
+        sys.exit(run_cli(sys.argv[1:]))
     else:
         from PyQt6.QtWidgets import QApplication
         from src.gui.main_window import MainWindow

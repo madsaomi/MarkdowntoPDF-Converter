@@ -1,8 +1,15 @@
 import os
 import logging
-from docx import Document
-from htmldocx import HtmlToDocx
 from typing import Dict, Any, Optional
+
+try:
+    from docx import Document
+except ImportError:
+    Document = None
+try:
+    from htmldocx import HtmlToDocx
+except ImportError:
+    HtmlToDocx = None
 
 logger = logging.getLogger("MarkdownToPDF.docx_renderer")
 
@@ -16,6 +23,11 @@ class DOCXRenderer:
         Takes raw HTML content (from Markdown parser), converts it to Word format,
         and saves it to the output_path.
         """
+        if Document is None:
+            raise ImportError("python-docx is required for DOCX export. Install with: pip install python-docx")
+        if HtmlToDocx is None:
+            raise ImportError("htmldocx is required for DOCX export. Install with: pip install htmldocx")
+
         # Create a new Word Document
         if reference_docx and os.path.exists(reference_docx):
             try:
