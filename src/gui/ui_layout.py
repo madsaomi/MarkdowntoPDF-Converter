@@ -152,7 +152,8 @@ def setup_ui(window):
     action_row.addWidget(window.btn_select_folder)
 
     window.format_combo = QComboBox()
-    window.format_combo.addItems(["PDF", "DOCX", "HTML", "EPUB", "PNG", "JPG", "PPTX", "Reveal"])
+    for fmt in ["PDF", "DOCX", "HTML", "EPUB", "PNG", "JPG", "PPTX", "REVEAL"]:
+        window.format_combo.addItem(fmt, fmt)
     window.format_combo.setFixedWidth(90)
     window.format_combo.setStyleSheet("""
         QComboBox { padding: 5px 8px; font-size: 11px; border: 1px solid rgba(255,255,255,0.08);
@@ -173,6 +174,19 @@ def setup_ui(window):
     """)
     window.btn_convert.clicked.connect(window.convert_files)
     action_row.addWidget(window.btn_convert)
+
+    window.btn_watch = QPushButton("Watch")
+    window.btn_watch.setCursor(Qt.CursorShape.PointingHandCursor)
+    window.btn_watch.setToolTip("Auto-convert on file change")
+    window.btn_watch.setEnabled(False)
+    window.btn_watch.setStyleSheet("""
+        QPushButton { background: transparent; border: 1px solid rgba(255,255,255,0.08);
+                      border-radius: 6px; padding: 5px 12px; font-size: 11px; color: #94a3b8; }
+        QPushButton:hover { background: rgba(255,255,255,0.06); border-color: rgba(59,130,246,0.3); color: #e2e8f0; }
+        QPushButton:disabled { color: #475569; }
+    """)
+    window.btn_watch.clicked.connect(window.toggle_watch)
+    action_row.addWidget(window.btn_watch)
 
     window.btn_cancel = QPushButton("Cancel")
     window.btn_cancel.setCursor(Qt.CursorShape.PointingHandCursor)

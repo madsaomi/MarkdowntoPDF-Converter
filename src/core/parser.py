@@ -241,6 +241,9 @@ class MarkdownParser:
             try:
                 # 1. Handle HTTP/HTTPS URLs (with cache)
                 if path_or_url.startswith(('http://', 'https://')):
+                    # Skip SVG images - WeasyPrint handles remote SVGs better than data URIs
+                    if content_type and 'svg' in content_type:
+                        return path_or_url
                     img_data = get_cached_or_download(path_or_url)
                     encoded_data = base64.b64encode(img_data).decode('utf-8')
                     return f"data:{content_type};base64,{encoded_data}"

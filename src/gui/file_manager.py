@@ -38,7 +38,8 @@ def select_files(window: QWidget):
         names = ", ".join(os.path.basename(f) for f in files)
         window.file_label.setText(window.tr_msg("files_selected", len(files), names))
         window.btn_convert.setEnabled(True)
-        window.btn_watch.setEnabled(len(files) == 1)
+        if hasattr(window, 'btn_watch'):
+            window.btn_watch.setEnabled(len(files) == 1)
         window.log_output.clear()
         window.progress_bar.setValue(0)
         window.append_log(window.tr_msg("log_selected", len(files)))
@@ -59,7 +60,8 @@ def select_folder(window: QWidget):
         window.active_workspace_folder = folder
         window.file_label.setText(window.tr_msg("folder_selected", os.path.basename(folder), len(md_files)))
         window.btn_convert.setEnabled(True)
-        window.btn_watch.setEnabled(False)
+        if hasattr(window, 'btn_watch'):
+            window.btn_watch.setEnabled(False)
         window.log_output.clear()
         window.progress_bar.setValue(0)
         window.append_log(window.tr_msg("log_found_folder", len(md_files)))
@@ -101,7 +103,8 @@ def open_recent(window: QWidget, filepath: str):
     window.explorer_group.hide()
     window.file_label.setText(os.path.basename(filepath))
     window.btn_convert.setEnabled(True)
-    window.btn_watch.setEnabled(True)
+    if hasattr(window, 'btn_watch'):
+        window.btn_watch.setEnabled(True)
     window.log_output.clear()
     window.progress_bar.setValue(0)
     window.append_log(window.tr_msg("log_opened_recent", filepath))
