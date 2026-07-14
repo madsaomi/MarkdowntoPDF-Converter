@@ -48,6 +48,12 @@ class AppConfig:
         return d
 
     @staticmethod
+    def data_dir() -> str:
+        d = os.path.join(os.getenv("APPDATA", "."), AppConfig.APP_NAME)
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    @staticmethod
     def backups_dir() -> str:
         d = os.path.join(AppConfig.app_data_dir(), "backups")
         os.makedirs(d, exist_ok=True)

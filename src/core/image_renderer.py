@@ -14,31 +14,19 @@ class ImageRenderer:
         self.wp_executable = wp_executable
 
     def render(self, html_content: str, metadata: dict, output_path: str,
-               doc_theme_css: str = '', code_theme_css: str = '',
+               doc_theme: str = 'theme_modern.css', code_theme: str = 'pygments.css',
                paper_size: str = 'A4', lang: str = 'ru',
                image_format: str = 'png', dpi: int = 150,
                cancel_flag=None):
-        from jinja2 import Environment, FileSystemLoader
+        from src.core.renderer import PDFRenderer
         from src.config import AppConfig
 
         template_dir = AppConfig.template_dir()
-        env = Environment(loader=FileSystemLoader(template_dir))
-        template = env.get_template('base.html')
-
-        rendered_html = template.render(
-            content=html_content,
-            meta=metadata,
-            doc_theme_css=doc_theme_css,
-            code_theme_css=code_theme_css,
-            custom_css='',
-            paper_size=paper_size,
-            watermark='',
-            footer_text='',
-            margins='',
-            page_numbers=False,
-            page_num_format='simple',
-            tr_page='Страница' if lang == 'ru' else 'Page',
-            tr_of='из' if lang == 'ru' else 'of',
+        pdf_renderer = PDFRenderer(template_dir, "")
+        rendered_html = pdf_renderer.render_html(
+            html_content, metadata,
+            doc_theme=doc_theme, code_theme=code_theme,
+            paper_size=paper_size, lang=lang
         )
 
         wp_exe = self.wp_executable

@@ -91,7 +91,6 @@ def build_executable(windowed=True):
         '--hidden-import=src.gui.document_tools',
         '--hidden-import=src.gui.file_manager',
         '--hidden-import=src.gui.preview_manager',
-        # '--hidden-import=src.gui.settings_manager',  # deleted - dead code
         '--hidden-import=src.gui.editor_commands',
         '--hidden-import=src.gui.models',
         '--hidden-import=src.gui.welcome_docs',

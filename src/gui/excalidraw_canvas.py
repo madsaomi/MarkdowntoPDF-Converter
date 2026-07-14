@@ -17,7 +17,7 @@ class ExcalidrawCanvas(QWidget):
         self.setMinimumSize(600, 400)
         self.setMouseTracking(True)
         self._drawing = False
-        self._strokes: list[list[QPoint]] = []
+        self._strokes: list[dict] = []
         self._current_stroke: list[QPoint] = []
         self._pen_color = QColor("#2c3e50")
         self._pen_width = 3
@@ -56,10 +56,13 @@ class ExcalidrawCanvas(QWidget):
     def mouseReleaseEvent(self, event: QMouseEvent):
         if self._drawing:
             end = event.pos()
-            if self._tool == "pen":
-                self._strokes.append(list(self._current_stroke))
-            elif self._tool == "eraser":
-                self._strokes.append(list(self._current_stroke))
+            if self._tool in ("pen", "eraser"):
+                self._strokes.append({
+                    "points": list(self._current_stroke),
+                    "tool": self._tool,
+                    "color": self._pen_color.name(),
+                    "width": self._pen_width,
+                })
             elif self._tool == "line":
                 self._shapes.append({"type": "line", "start": self._start_point, "end": end, "color": self._pen_color.name(), "width": self._pen_width})
             elif self._tool == "rect":
@@ -72,48 +75,50 @@ class ExcalidrawCanvas(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.fillRect(self.rect(), QColor("white"))
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            painter.fillRect(self.rect(), QColor("white"))
 
-        # Draw completed strokes
-        for stroke in self._strokes:
-            if len(stroke) < 2:
-                continue
-            is_eraser = self._tool == "eraser"
-            pen = QPen(QColor("white") if is_eraser else self._pen_color, self._pen_width if not is_eraser else 10)
-            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-            pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
-            painter.setPen(pen)
-            path = QPainterPath()
-            path.moveTo(stroke[0])
-            for pt in stroke[1:]:
-                path.lineTo(pt)
-            painter.drawPath(path)
+            # Draw completed strokes
+            for stroke in self._strokes:
+                pts = stroke["points"]
+                if len(pts) < 2:
+                    continue
+                is_eraser = stroke["tool"] == "eraser"
+                pen = QPen(QColor("white") if is_eraser else QColor(stroke["color"]), 10 if is_eraser else stroke["width"])
+                pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+                pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+                painter.setPen(pen)
+                path = QPainterPath()
+                path.moveTo(pts[0])
+                for pt in pts[1:]:
+                    path.lineTo(pt)
+                painter.drawPath(path)
 
-        # Draw current stroke
-        if self._current_stroke and len(self._current_stroke) >= 2:
-            pen = QPen(self._pen_color, self._pen_width)
-            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-            painter.setPen(pen)
-            path = QPainterPath()
-            path.moveTo(self._current_stroke[0])
-            for pt in self._current_stroke[1:]:
-                path.lineTo(pt)
-            painter.drawPath(path)
+            # Draw current stroke
+            if self._current_stroke and len(self._current_stroke) >= 2:
+                pen = QPen(self._pen_color, self._pen_width)
+                pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+                painter.setPen(pen)
+                path = QPainterPath()
+                path.moveTo(self._current_stroke[0])
+                for pt in self._current_stroke[1:]:
+                    path.lineTo(pt)
+                painter.drawPath(path)
 
-        # Draw shapes
-        for shape in self._shapes:
-            pen = QPen(QColor(shape["color"]), shape["width"])
-            painter.setPen(pen)
-            s, e = shape["start"], shape["end"]
-            if shape["type"] == "line":
-                painter.drawLine(s, e)
-            elif shape["type"] == "rect":
-                painter.drawRect(min(s.x(), e.x()), min(s.y(), e.y()), abs(e.x() - s.x()), abs(e.y() - s.y()))
-            elif shape["type"] == "circle":
-                painter.drawEllipse(min(s.x(), e.x()), min(s.y(), e.y()), abs(e.x() - s.x()), abs(e.y() - s.y()))
-
-        painter.end()
+            # Draw shapes
+            for shape in self._shapes:
+                pen = QPen(QColor(shape["color"]), shape["width"])
+                painter.setPen(pen)
+                s, e = shape["start"], shape["end"]
+                if shape["type"] == "line":
+                    painter.drawLine(s, e)
+                elif shape["type"] == "rect":
+                    painter.drawRect(min(s.x(), e.x()), min(s.y(), e.y()), abs(e.x() - s.x()), abs(e.y() - s.y()))
+                elif shape["type"] == "circle":
+                    painter.drawEllipse(min(s.x(), e.x()), min(s.y(), e.y()), abs(e.x() - s.x()), abs(e.y() - s.y()))
+        finally:
+            painter.end()
 
     def to_svg(self) -> str:
         """Export drawing as SVG."""
@@ -122,10 +127,14 @@ class ExcalidrawCanvas(QWidget):
         svg.append(f'<rect width="{w}" height="{h}" fill="white"/>')
 
         for stroke in self._strokes:
-            if len(stroke) < 2:
+            pts = stroke["points"]
+            if len(pts) < 2:
                 continue
-            points = " ".join(f"{p.x()},{p.y()}" for p in stroke)
-            svg.append(f'<polyline points="{points}" fill="none" stroke="#2c3e50" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>')
+            is_eraser = stroke["tool"] == "eraser"
+            points = " ".join(f"{p.x()},{p.y()}" for p in pts)
+            color = "white" if is_eraser else stroke.get("color", "#2c3e50")
+            width = 10 if is_eraser else stroke.get("width", 3)
+            svg.append(f'<polyline points="{points}" fill="none" stroke="{color}" stroke-width="{width}" stroke-linecap="round" stroke-linejoin="round"/>')
 
         for shape in self._shapes:
             s, e = shape["start"], shape["end"]
@@ -147,7 +156,7 @@ class ExcalidrawCanvas(QWidget):
     def to_dict(self) -> dict:
         """Export as JSON-serializable dict."""
         return {
-            "strokes": [[{"x": p.x(), "y": p.y()} for p in s] for s in self._strokes],
+            "strokes": [{"points": [{"x": p.x(), "y": p.y()} for p in s["points"]], "tool": s["tool"], "color": s["color"], "width": s["width"]} for s in self._strokes],
             "shapes": [
                 {**s, "start": {"x": s["start"].x(), "y": s["start"].y()}, "end": {"x": s["end"].x(), "y": s["end"].y()}}
                 for s in self._shapes
@@ -230,5 +239,5 @@ class ExcalidrawDialog(QDialog):
 
     def _insert_markdown(self):
         svg = self.canvas.to_svg()
-        self.selected_markdown = f"\n```diagram\n{svg}\n```\n"
+        self.selected_markdown = f'\n<div class="excalidraw-diagram" style="text-align:center;margin:1em 0;">\n{svg}\n</div>\n'
         self.accept()

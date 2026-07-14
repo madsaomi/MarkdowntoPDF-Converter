@@ -100,6 +100,11 @@ class DocumentTranslator:
             },
         }
 
+        # Pre-compute reverse lookups to avoid rebuilding dict on each call
+        self._reverse_cache: dict[tuple[str, str], dict[str, str]] = {}
+        for (src, tgt), mapping in self._common_words.items():
+            self._reverse_cache[(tgt, src)] = {v: k for k, v in mapping.items()}
+
     def translate_text(self, text: str, source_lang: str, target_lang: str) -> TranslationResult:
         """Translate text between languages."""
         if source_lang == target_lang:
@@ -119,14 +124,10 @@ class DocumentTranslator:
     def _translate_with_dict(self, text: str, source_lang: str, target_lang: str) -> str:
         """Translate using built-in dictionary."""
         dict_key = (source_lang, target_lang)
-        reverse_key = (target_lang, source_lang)
 
-        word_dict = self._common_words.get(dict_key, {})
-
-        if not word_dict and reverse_key:
-            # Try reverse lookup
-            reverse_dict = self._common_words.get(reverse_key, {})
-            word_dict = {v: k for k, v in reverse_dict.items()}
+        word_dict = self._common_words.get(dict_key)
+        if word_dict is None:
+            word_dict = self._reverse_cache.get(dict_key, {})
 
         if not word_dict:
             return text

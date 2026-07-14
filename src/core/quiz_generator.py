@@ -63,15 +63,20 @@ def generate_quiz_from_text(text: str) -> dict:
             })
 
     # Generate fill-in-the-blank from sentences
+    all_words = [w for w in re.findall(r'\b\w{4,}\b', text) if w[0].islower()]
     sentences = [s.strip() for s in re.split(r'[.!?]+', text) if len(s.strip()) > 20]
     for sentence in sentences[:5]:
         words = sentence.split()
         if len(words) > 5:
             key_word = random.choice([w for w in words if len(w) > 4] or words[3:6])
             blank = sentence.replace(key_word, "________")
+            distractors = [w for w in all_words if w.lower() != key_word.lower()]
+            random.shuffle(distractors)
+            options = [key_word] + distractors[:3]
+            random.shuffle(options)
             questions.append({
                 "question": f"Fill in the blank: {blank}",
-                "options": [key_word, "Option B", "Option C", "Option D"],
+                "options": options,
                 "answer": key_word,
                 "topic": "Fill-in-the-blank",
             })
@@ -97,22 +102,26 @@ def quiz_to_markdown(quiz: dict) -> str:
 
 def quiz_to_html(quiz: dict) -> str:
     """Convert quiz to interactive HTML."""
+    import html
     questions_html = []
     for i, q in enumerate(quiz['questions'], 1):
         options_html = []
         for j, opt in enumerate(q['options']):
+            safe_opt = html.escape(opt)
             options_html.append(f"""
             <label class="option">
-                <input type="radio" name="q{i}" value="{opt}" />
-                <span>{opt}</span>
+                <input type="radio" name="q{i}" value="{safe_opt}" />
+                <span>{safe_opt}</span>
             </label>""")
 
+        safe_q = html.escape(q['question'])
+        safe_a = html.escape(q['answer'])
         questions_html.append(f"""
         <div class="question" id="q{i}">
-            <h3>Q{i}: {q['question']}</h3>
+            <h3>Q{i}: {safe_q}</h3>
             {''.join(options_html)}
             <div class="answer" style="display:none;color:#27ae60;font-weight:bold;">
-                Correct: {q['answer']}
+                Correct: {safe_a}
             </div>
         </div>""")
 

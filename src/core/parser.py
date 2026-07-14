@@ -1,6 +1,30 @@
 import markdown
 from markdown.extensions.toc import TocExtension
 from typing import Tuple, Dict, Any, Optional
+import socket
+from urllib.parse import urlparse
+
+
+def _is_private_url(url: str) -> bool:
+    """Check if URL points to a private/reserved IP (SSRF protection)."""
+    try:
+        host = urlparse(url).hostname or ""
+        if host in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+            return True
+        host_lower = host.lower()
+        if host_lower.endswith(".local") or host_lower.endswith(".internal"):
+            return True
+        ip = socket.gethostbyname(host)
+        if ip.startswith(("10.", "172.16.", "172.17.", "172.18.", "172.19.",
+                          "172.20.", "172.21.", "172.22.", "172.23.",
+                          "172.24.", "172.25.", "172.26.", "172.27.",
+                          "172.28.", "172.29.", "172.30.", "172.31.",
+                          "192.168.", "169.254.", "127.")):
+            return True
+    except Exception:
+        pass
+    return False
+
 
 class MarkdownParser:
     def __init__(self):
@@ -165,17 +189,17 @@ class MarkdownParser:
         logger = logging.getLogger("MarkdownToPDF.Parser")
         
         # Image cache directory
-        try:
-            from src.config import AppConfig
-            cache_dir = AppConfig.cache_dir()
-        except Exception:
-            cache_dir = os.path.join(os.getenv("APPDATA", "."), "MarkdownToPDF_Pro", "cache", "images")
-            os.makedirs(cache_dir, exist_ok=True)
+        from src.config import AppConfig
+        cache_dir = AppConfig.cache_dir()
         
-        img_pattern = re.compile(r'<img\s+([^>]*?)src=["\'](.*?)["\']([^>]*?)>', re.IGNORECASE)
+        img_pattern = re.compile(r'<img\s+([^>]*?)src=["\'](.*?)["\']([^>]*?)\s*/?>', re.IGNORECASE)
         
         def get_cached_or_download(url: str) -> bytes:
             """Download URL with file-based cache (7-day TTL)."""
+            if not url.startswith(("http://", "https://")):
+                raise ValueError(f"Only HTTP/HTTPS URLs allowed: {url}")
+            if _is_private_url(url):
+                raise ValueError(f"Blocked private/reserved URL: {url}")
             url_hash = hashlib.md5(url.encode()).hexdigest()
             cache_path = os.path.join(cache_dir, f"{url_hash}.bin")
             
@@ -223,11 +247,15 @@ class MarkdownParser:
                     
                 # 2. Handle Local Files
                 else:
-                    full_path = path_or_url
-                    if base_dir and not os.path.isabs(path_or_url):
-                        full_path = os.path.join(base_dir, path_or_url)
-                        
-                    full_path = urllib.parse.unquote(full_path)
+                    full_path = urllib.parse.unquote(path_or_url)
+                    if base_dir:
+                        if not os.path.isabs(full_path):
+                            full_path = os.path.normpath(os.path.join(base_dir, full_path))
+                        resolved = os.path.realpath(full_path)
+                        base_resolved = os.path.realpath(base_dir)
+                        if not resolved.startswith(base_resolved + os.sep) and resolved != base_resolved:
+                            logger.warning("Path traversal blocked: %s", path_or_url)
+                            return path_or_url
                     
                     if os.path.exists(full_path) and os.path.isfile(full_path):
                         with open(full_path, 'rb') as f:
@@ -249,6 +277,29 @@ class MarkdownParser:
             return f'<img {attrs_before}src="{base64_src}"{attrs_after}>'
             
         return img_pattern.sub(replace_img, html)
+
+    def _sanitize_html(self, html: str) -> str:
+        import re
+        safe = html
+        # Remove <script> and </script> tags (even without matching close/open)
+        safe = re.sub(r'<script[^>]*>', '', safe, flags=re.IGNORECASE)
+        safe = re.sub(r'</script[^>]*>', '', safe, flags=re.IGNORECASE)
+        # Remove event handlers (onclick, onerror, onload, onmouseover, etc.)
+        safe = re.sub(r'\bon\w+\s*=\s*["\'][^"\']*["\']', '', safe, flags=re.IGNORECASE)
+        safe = re.sub(r'\bon\w+\s*=\s*\S+', '', safe, flags=re.IGNORECASE)
+        # Block javascript: in href, src, action, data, formaction, xlink:href
+        safe = re.sub(r'\b(href|src|action|data|formaction|xlink:href)\s*=\s*["\']\s*javascript\s*:', r'\1="#blocked-javascript:', safe, flags=re.IGNORECASE)
+        # Block <object>, <embed>, <applet> tags
+        safe = re.sub(r'<object[^>]*>.*?</object>', '', safe, flags=re.DOTALL | re.IGNORECASE)
+        safe = re.sub(r'<embed[^>]*>', '', safe, flags=re.IGNORECASE)
+        safe = re.sub(r'<applet[^>]*>.*?</applet>', '', safe, flags=re.DOTALL | re.IGNORECASE)
+        # Block <iframe>, <frame>, <frameset>
+        safe = re.sub(r'<iframe[^>]*>.*?</iframe>', '', safe, flags=re.DOTALL | re.IGNORECASE)
+        safe = re.sub(r'<frame[^>]*>', '', safe, flags=re.IGNORECASE)
+        safe = re.sub(r'<frameset[^>]*>.*?</frameset>', '', safe, flags=re.DOTALL | re.IGNORECASE)
+        # Block <base> tag (can hijack relative URLs)
+        safe = re.sub(r'<base[^>]*>', '', safe, flags=re.IGNORECASE)
+        return safe
 
     def _ensure_table_spacing(self, text: str) -> str:
         lines = text.split('\n')
@@ -306,6 +357,7 @@ class MarkdownParser:
                 slides_html.append(f'<section class="slide">{s_html}</section>')
                 
             html = "\n".join(slides_html)
+            html = self._sanitize_html(html)
         else:
             processed_text = self.preprocess_mermaid(text)
             processed_text = self.preprocess_diagrams(processed_text)
@@ -319,4 +371,5 @@ class MarkdownParser:
             
         # Protect and inline all media resources
         html = self.preprocess_media(html, base_dir=base_dir)
+        html = self._sanitize_html(html)
         return html, flat_meta

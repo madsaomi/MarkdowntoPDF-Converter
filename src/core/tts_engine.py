@@ -4,7 +4,6 @@ import logging
 import os
 import re
 import tempfile
-import json
 import threading
 from dataclasses import dataclass, field
 from typing import Optional, Callable
@@ -49,20 +48,6 @@ class TTSSettings:
     volume: float = 1.0
     pause_between_paragraphs: float = 0.5
     pause_between_sentences: float = 0.2
-    enable_effects: bool = False
-    echo_enabled: bool = False
-    echo_delay: float = 0.3
-    echo_decay: float = 0.5
-    reverb_enabled: bool = False
-    reverb_amount: float = 0.3
-    chorus_enabled: bool = False
-    chorus_depth: float = 0.2
-    chorus_rate: float = 0.5
-    flanger_enabled: bool = False
-    pitch_shift: float = 0.0
-    auto_emphasis: bool = False
-    breathing_enabled: bool = False
-    breathing_rate: float = 0.3
 
 
 class AdvancedTTSEngine:
@@ -129,7 +114,6 @@ class AdvancedTTSEngine:
         self._playback_thread: Optional[threading.Thread] = None
         self._on_state_change: Optional[Callable] = None
         self._on_progress: Optional[Callable] = None
-        self._bookmarks: list[dict] = []
 
     def get_voices(self, language: str = None) -> list[VoiceProfile]:
         """Get available voices, optionally filtered by language."""
@@ -157,25 +141,6 @@ class AdvancedTTSEngine:
         """Set pause duration between paragraphs."""
         self.settings.pause_between_paragraphs = pause
 
-    def set_echo(self, enabled: bool, delay: float = 0.3, decay: float = 0.5):
-        """Enable/disable echo effect."""
-        self.settings.echo_enabled = enabled
-        self.settings.echo_delay = delay
-        self.settings.echo_decay = decay
-
-    def set_reverb(self, enabled: bool, amount: float = 0.3):
-        """Enable/disable reverb effect."""
-        self.settings.reverb_enabled = enabled
-        self.settings.reverb_amount = amount
-
-    def add_bookmark(self, position: int, label: str):
-        """Add a bookmark at text position."""
-        self._bookmarks.append({"position": position, "label": label})
-
-    def clear_bookmarks(self):
-        """Clear all bookmarks."""
-        self._bookmarks.clear()
-
     def speak(self, text: str, lang: str = "ru"):
         """Speak text aloud (non-blocking)."""
         if self._is_playing:
@@ -198,7 +163,6 @@ class AdvancedTTSEngine:
             import pyttsx3
             engine = pyttsx3.init()
 
-            # Apply voice settings
             voices = engine.getProperty('voices')
             voice_id = self.settings.voice_id
             for voice in voices:
@@ -209,7 +173,6 @@ class AdvancedTTSEngine:
             engine.setProperty('rate', int(200 * self.settings.speed))
             engine.setProperty('volume', self.settings.volume)
 
-            # Process text with pauses
             paragraphs = text.split('\n\n')
             for i, paragraph in enumerate(paragraphs):
                 if not self._is_playing:
@@ -220,15 +183,12 @@ class AdvancedTTSEngine:
                         break
 
                 if paragraph.strip():
-                    # Apply effects
-                    processed = self._apply_effects(paragraph)
-                    engine.say(processed)
+                    engine.say(paragraph)
 
                     if self._on_progress:
                         progress = (i + 1) / len(paragraphs)
                         self._on_progress(progress, paragraph[:50])
 
-                # Pause between paragraphs
                 if i < len(paragraphs) - 1:
                     import time
                     time.sleep(self.settings.pause_between_paragraphs)
@@ -244,11 +204,6 @@ class AdvancedTTSEngine:
             self._is_paused = False
             if self._on_state_change:
                 self._on_state_change("stopped")
-
-    def _apply_effects(self, text: str) -> str:
-        """Apply audio effects to text (placeholder for future implementation)."""
-        # In future: apply echo, reverb, etc.
-        return text
 
     def pause(self):
         """Pause playback."""

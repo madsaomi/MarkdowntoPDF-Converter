@@ -140,8 +140,9 @@ class GraphBuilder:
         if not graph['nodes']:
             return "<p>Нет файлов для отображения</p>"
 
-        nodes_json = str(graph['nodes']).replace("'", '"')
-        edges_json = str(graph['edges']).replace("'", '"')
+        import json
+        nodes_json = json.dumps(graph['nodes'])
+        edges_json = json.dumps(graph['edges'])
 
         return f"""<!DOCTYPE html>
 <html>

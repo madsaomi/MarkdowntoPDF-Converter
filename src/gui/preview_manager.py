@@ -2,12 +2,12 @@
 
 import os
 import logging
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QWidget
 
 logger = logging.getLogger("MarkdownToPDF.preview_manager")
 
 
-def render_live_preview(window):
+def render_live_preview(window: QWidget):
     md_text = window.live_editor.toPlainText()
     if not md_text:
         return
@@ -150,7 +150,7 @@ def render_live_preview(window):
         window.preview_output.setHtml(f"<p style='color:red;'>Preview error: {e}</p>")
 
 
-def sync_scroll_preview(window, value):
+def sync_scroll_preview(window: QWidget, value):
     editor_scroll = window.live_editor.verticalScrollBar()
     max_editor = editor_scroll.maximum()
     if max_editor <= 0:
@@ -162,19 +162,19 @@ def sync_scroll_preview(window, value):
     preview_scroll.setValue(int(percentage * max_preview))
 
 
-def zoom_in(window):
+def zoom_in(window: QWidget):
     window.live_editor.zoomIn(1)
     window.preview_output.zoomIn(1)
     window.zoom_level += 1
 
 
-def zoom_out(window):
+def zoom_out(window: QWidget):
     window.live_editor.zoomOut(1)
     window.preview_output.zoomOut(1)
     window.zoom_level -= 1
 
 
-def zoom_reset(window):
+def zoom_reset(window: QWidget):
     if window.zoom_level > 0:
         window.live_editor.zoomOut(window.zoom_level)
         window.preview_output.zoomOut(window.zoom_level)
@@ -184,7 +184,7 @@ def zoom_reset(window):
     window.zoom_level = 0
 
 
-def print_document(window):
+def print_document(window: QWidget):
     from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
     render_live_preview(window)
     printer = QPrinter(QPrinter.PrinterMode.HighResolution)
@@ -193,7 +193,7 @@ def print_document(window):
         window.preview_output.print(printer)
 
 
-def copy_styled_html(window):
+def copy_styled_html(window: QWidget):
     html_content = window.preview_output.toHtml()
     clipboard = QApplication.clipboard()
     clipboard.setText(html_content)

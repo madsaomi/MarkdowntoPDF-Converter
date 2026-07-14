@@ -1026,7 +1026,7 @@ class PDFStyleEditorDialog(QDialog):
         # Paper preset
         self.paper_combo = QComboBox()
         self.paper_combo.addItems(["A4", "Letter", "A5"])
-        lay.addRow(t('label_paper_size'), self.paper_combo)
+        lay.addRow(t('paper_size'), self.paper_combo)
         
     def init_typography_tab(self, t):
         lay = QFormLayout(self.tab_typography)

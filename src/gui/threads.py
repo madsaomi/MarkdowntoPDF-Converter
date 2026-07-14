@@ -104,16 +104,13 @@ class ConversionThread(QThread):
                     self.log.emit(t("log_saved", f"{output_file} ({count} slides)"))
                 elif opt.export_format in (ExportFormat.PNG, ExportFormat.JPG):
                     from src.core.image_renderer import ImageRenderer
-                    from src.core.renderer import PDFRenderer
-                    tmp_renderer = PDFRenderer(self.template_dir, self.wp_executable)
-                    doc_theme_css = tmp_renderer._read_css(doc_theme_file)
-                    code_theme_css = tmp_renderer._read_css(opt.code_theme)
                     renderer = ImageRenderer(self.wp_executable)
                     fmt = 'png' if opt.export_format == ExportFormat.PNG else 'jpg'
                     count = renderer.render(
                         html_content, metadata, output_file,
-                        doc_theme_css, code_theme_css,
-                        opt.paper_size, self.lang, fmt,
+                        doc_theme=doc_theme_file, code_theme=opt.code_theme,
+                        paper_size=opt.paper_size, lang=self.lang,
+                        image_format=fmt,
                         cancel_flag=self.is_cancelled
                     )
                     self.log.emit(t("log_saved", f"{output_file} ({count} pages)"))

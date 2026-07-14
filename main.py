@@ -98,12 +98,11 @@ def run_cli(args):
             elif parsed.format in ("png", "jpg"):
                 from src.core.image_renderer import ImageRenderer
                 renderer = ImageRenderer(wp_executable)
-                doc_theme_css = PDFRenderer(template_dir, wp_executable)._read_css(doc_theme)
-                code_theme_css = PDFRenderer(template_dir, wp_executable)._read_css(code_theme)
                 count = renderer.render(
                     html_content, metadata, out_file,
-                    doc_theme_css, code_theme_css,
-                    parsed.paper, parsed.lang, parsed.format
+                    doc_theme=doc_theme, code_theme=code_theme,
+                    paper_size=parsed.paper, lang=parsed.lang,
+                    image_format=parsed.format
                 )
                 print(f"✅ Saved {count} image(s): {out_file}")
             elif parsed.format == "pptx":

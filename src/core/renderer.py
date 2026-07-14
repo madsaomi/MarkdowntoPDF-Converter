@@ -40,16 +40,14 @@ class PDFRenderer:
         code_theme_css = self._read_css(code_theme)
 
         custom_css = ""
-        if custom_css_path and os.path.exists(custom_css_path):
-            try:
-                with open(custom_css_path, 'r', encoding='utf-8') as f:
-                    custom_css = f.read()
-            except Exception as e:
-                logger.warning("Failed to read custom CSS '%s': %s", custom_css_path, e)
-
-        # Sanitize user-provided strings for CSS injection safety
-        safe_watermark = watermark.replace('"', '\\"').replace('\\', '\\\\') if watermark else ''
-        safe_footer = footer_text.replace('"', '\\"').replace('\\', '\\\\') if footer_text else ''
+        if custom_css_path:
+            resolved = os.path.realpath(custom_css_path)
+            if os.path.exists(resolved) and os.path.isfile(resolved):
+                try:
+                    with open(resolved, 'r', encoding='utf-8') as f:
+                        custom_css = f.read()
+                except Exception as e:
+                    logger.warning("Failed to read custom CSS '%s': %s", custom_css_path, e)
 
         # Resolve dynamic footer variables
         import datetime
@@ -58,13 +56,18 @@ class PDFRenderer:
         input_filename = os.path.basename(input_filepath) if input_filepath else ""
         doc_title = metadata.get('title', '')
 
-        resolved_footer = safe_footer
+        resolved_footer = footer_text
         if resolved_footer:
             resolved_footer = resolved_footer.replace("{date}", current_date)
             resolved_footer = resolved_footer.replace("{time}", current_time)
             resolved_footer = resolved_footer.replace("{filename}", input_filename)
             resolved_footer = resolved_footer.replace("{title}", doc_title)
             resolved_footer = resolved_footer.replace("{word_count}", str(word_count))
+
+        # Sanitize for CSS injection: strip non-printable and control chars
+        safe_chars = set(" 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZабвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ.,!?:;-@#$%^&*()_+=/<>'«»")
+        safe_watermark = ''.join(c for c in (watermark or '') if c in safe_chars)
+        safe_footer = ''.join(c for c in (resolved_footer or '') if c in safe_chars)
 
         tr_page = 'Страница' if lang == 'ru' else 'Page'
         tr_of = 'из' if lang == 'ru' else 'of'

@@ -209,8 +209,20 @@ participants: "[Names]"
         return fallback
 
 
+def _is_safe_template_url(url: str) -> bool:
+    """Allow only known template repositories (SSRF protection)."""
+    allowed_prefixes = (
+        "https://raw.githubusercontent.com/",
+        "https://github.com/",
+    )
+    return url.startswith(allowed_prefixes)
+
+
 def download_template(url):
     """Download template content from URL."""
+    if not _is_safe_template_url(url):
+        logger.error("Blocked unsafe template URL: %s", url)
+        return None
     try:
         req = urllib.request.Request(url, method='GET')
         req.add_header('User-Agent', 'MarkdownToPDF/1.0')

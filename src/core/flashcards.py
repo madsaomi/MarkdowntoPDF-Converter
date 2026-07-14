@@ -57,13 +57,15 @@ def cards_to_markdown(cards: list[dict]) -> str:
 
 def cards_to_html(cards: list[dict]) -> str:
     """Export flashcards as interactive HTML with flip animation."""
+    import html
     cards_html = []
     for i, card in enumerate(cards):
-        back = card['back'].replace('\n', '<br>')
+        safe_front = html.escape(card['front'])
+        safe_back = html.escape(card['back']).replace('\n', '<br>')
         cards_html.append(f"""
         <div class="card" onclick="this.classList.toggle('flipped')">
-            <div class="front">{card['front']}</div>
-            <div class="back">{back}</div>
+            <div class="front">{safe_front}</div>
+            <div class="back">{safe_back}</div>
         </div>""")
 
     return f"""<!DOCTYPE html>

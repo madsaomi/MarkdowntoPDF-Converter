@@ -45,16 +45,19 @@ def glossary_to_markdown(definitions: list[dict]) -> str:
 
 def glossary_to_html(definitions: list[dict]) -> str:
     """Convert definitions to HTML glossary with anchor links."""
+    import html
     if not definitions:
         return ""
 
     items = []
     nav = []
     for d in definitions:
+        safe_term = html.escape(d['term'])
+        safe_def = html.escape(d['definition'])
         anchor = re.sub(r'[^\w]', '', d['term'].lower())
-        nav.append(f'<a href="#{anchor}" style="display:inline-block;margin:4px 8px;padding:4px 12px;background:#f1f2f6;border-radius:4px;text-decoration:none;color:#2c3e50;">{d["term"]}</a>')
-        items.append(f'<dt id="{anchor}" style="font-weight:bold;color:#2c3e50;margin-top:12px;">{d["term"]}</dt>')
-        items.append(f'<dd style="margin:0 0 0 20px;color:#7f8c8d;">{d["definition"]}</dd>')
+        nav.append(f'<a href="#{anchor}" style="display:inline-block;margin:4px 8px;padding:4px 12px;background:#f1f2f6;border-radius:4px;text-decoration:none;color:#2c3e50;">{safe_term}</a>')
+        items.append(f'<dt id="{anchor}" style="font-weight:bold;color:#2c3e50;margin-top:12px;">{safe_term}</dt>')
+        items.append(f'<dd style="margin:0 0 0 20px;color:#7f8c8d;">{safe_def}</dd>')
 
     return f"""<!DOCTYPE html>
 <html><head><style>

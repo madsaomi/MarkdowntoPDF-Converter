@@ -66,6 +66,7 @@ from src.gui.toast import ToastNotification
 from src.gui.about_dialog import AboutDialog
 from src.gui.custom_titlebar import CustomTitleBar
 from src.gui.ambient_glow import AmbientGlowWidget
+from src.gui.window_tools import ToolMethodsMixin
 
 # ──────────────────────── Dark / Light stylesheets ────────────────────────
 
@@ -78,7 +79,7 @@ APP_NAME = "MarkdownToPDF_Pro"
 
 # ──────────────────────── Main Window ────────────────────────
 
-class MainWindow(QMainWindow):
+class MainWindow(QMainWindow, ToolMethodsMixin):
     MAX_RECENT = 10
 
     def __init__(self):
@@ -144,9 +145,7 @@ class MainWindow(QMainWindow):
         self.combo_page_format.setEnabled(self.chk_page_numbers.isChecked())
         self.chk_page_numbers.toggled.connect(self.combo_page_format.setEnabled)
         
-        # Connect Language actions
-        self.action_lang_ru.triggered.connect(lambda: self.change_lang("ru"))
-        self.action_lang_en.triggered.connect(lambda: self.change_lang("en"))
+        # Language menu handled directly in ui_layout.py
         
         self._setup_shortcuts()
         self.load_settings()
@@ -326,7 +325,7 @@ class MainWindow(QMainWindow):
         anim.setStartValue(0.7)
         anim.setEndValue(1.0)
         apply_theme()
-        anim.start(QPropertyAnimation.DeleteWhenStopped)
+        anim.start()
         self._theme_anim = anim
 
     def preview_code_theme(self):
@@ -604,7 +603,22 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
         return fmt_map.get(export_format, ".pdf")
 
     def _get_options(self) -> ConversionOptions:
-        return _get_options(self)
+        return ConversionOptions(
+            doc_theme=self.doc_theme_combo.currentData(),
+            code_theme=self.code_theme_combo.currentData(),
+            paper_size=self.paper_combo.currentText(),
+            watermark=self.watermark_input.text().strip(),
+            footer_text=self.footer_input.text().strip(),
+            custom_css=self.custom_css_input.text().strip(),
+            export_format=self.format_combo.currentData(),
+            pdf_password=self.pdf_password_input.text().strip(),
+            margins=self.margins_input.text().strip(),
+            docx_template=self.docx_template_input.text().strip(),
+            page_numbers=self.chk_page_numbers.isChecked(),
+            page_num_format=self.combo_page_format.currentData() or "simple",
+            is_presentation=self.chk_presentation_mode.isChecked(),
+            compress=self.chk_compress.isChecked(),
+        )
 
 
     def append_log(self, text: str):
@@ -615,6 +629,10 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
             self.thread.cancel()
             self.btn_cancel.setEnabled(False)
             self.append_log(self.tr_msg("log_cancel_req"))
+
+    def update_preview_from_editor(self):
+        self._render_live_preview()
+        self.update_text_statistics()
 
     def update_preview(self, filepath: str):
         try:
@@ -783,121 +801,95 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
         try:
             menubar = self.menuBar()
             menubar.actions()[0].setText(t('menu_file'))
-            self.recent_menu.setTitle(t('menu_recent'))
-            self.lang_menu.setTitle(t('menu_language'))
-            if hasattr(self, 'tools_menu'):
-                self.tools_menu.setTitle(t('menu_tools'))
-                self.action_update_toc.setText(t('menu_update_toc'))
-                self.action_audit.setText(t('menu_audit'))
-                self.action_format.setText(t('menu_format'))
+            if hasattr(self, 'recent_menu') and self.recent_menu:
+                self.recent_menu.setTitle(t('menu_recent'))
+            if hasattr(self, 'lang_menu'):
+                self.lang_menu.setTitle(t('menu_language'))
         except Exception as e:
             logger.warning("Menu retranslation failed: %s", e)
-            
-        self.btn_theme.setText(t('btn_theme_light') if self.is_dark else t('btn_theme_dark'))
         
-        # Labels and Groupboxes
-        self.label_doc_style.setText(t('doc_style'))
-        self.label_code_style.setText(t('code_style'))
-        self.label_paper_size.setText(t('paper_size'))
-        self.label_watermark.setText(t('watermark'))
-        self.label_footer.setText(t('footer'))
-        self.label_custom_css.setText(t('custom_css'))
-        self.label_pdf_password.setText(t('pdf_password'))
-        self.label_margins.setText(t('pdf_margins'))
-        self.label_docx_template.setText(t('docx_template'))
-        self.label_preset.setText(t('preset_label'))
+        # Theme button
+        if hasattr(self, 'btn_theme'):
+            self.btn_theme.setText(t('btn_theme_light') if self.is_dark else t('btn_theme_dark'))
         
-        # Translate page numbering and presentation mode widgets
-        self.chk_page_numbers.setText(t('chk_page_numbers'))
-        self.label_page_format.setText(t('lbl_page_format'))
-        self.chk_presentation_mode.setText(t('chk_presentation_mode'))
-        self.chk_presentation_mode.setToolTip(t('tip_chk_presentation'))
+        # Settings dialog labels
+        if hasattr(self, 'chk_page_numbers'):
+            self.chk_page_numbers.setText(t('chk_page_numbers'))
+        if hasattr(self, 'chk_presentation_mode'):
+            self.chk_presentation_mode.setText(t('chk_presentation_mode'))
+        if hasattr(self, 'chk_compress'):
+            self.chk_compress.setText(t('chk_compress'))
         
-        self.combo_page_format.blockSignals(True)
-        current_data = self.combo_page_format.currentData()
-        self.combo_page_format.clear()
-        self.combo_page_format.addItem(t('page_format_simple'), "simple")
-        self.combo_page_format.addItem(t('page_format_slash'), "slash")
-        self.combo_page_format.addItem(t('page_format_text'), "text")
-        idx = self.combo_page_format.findData(current_data)
-        if idx >= 0:
-            self.combo_page_format.setCurrentIndex(idx)
-        self.combo_page_format.blockSignals(False)
+        if hasattr(self, 'combo_page_format'):
+            self.combo_page_format.blockSignals(True)
+            current_data = self.combo_page_format.currentData()
+            self.combo_page_format.clear()
+            self.combo_page_format.addItem(t('page_format_simple'), "simple")
+            self.combo_page_format.addItem(t('page_format_slash'), "slash")
+            self.combo_page_format.addItem(t('page_format_text'), "text")
+            idx = self.combo_page_format.findData(current_data)
+            if idx >= 0:
+                self.combo_page_format.setCurrentIndex(idx)
+            self.combo_page_format.blockSignals(False)
         
         # Placeholders
-        self.watermark_input.setPlaceholderText(t('placeholder_watermark'))
-        self.footer_input.setPlaceholderText(t('placeholder_footer'))
-        self.custom_css_input.setPlaceholderText(t('placeholder_css'))
-        self.pdf_password_input.setPlaceholderText(t('placeholder_password'))
-        self.margins_input.setPlaceholderText(t('placeholder_margins'))
-        self.docx_template_input.setPlaceholderText(t('placeholder_docx'))
+        for attr in ['watermark_input', 'footer_input', 'custom_css_input',
+                     'pdf_password_input', 'margins_input', 'docx_template_input']:
+            if hasattr(self, attr):
+                ph_key = f'placeholder_{attr.replace("_input", "")}'
+                if ph_key in TRANSLATIONS[self.current_lang]:
+                    getattr(self, attr).setPlaceholderText(t(ph_key))
+        
         self.live_editor.setPlaceholderText(t('placeholder_editor'))
         
         # Buttons
-        self.btn_select_css.setText(t('btn_browse'))
-        self.btn_select_docx.setText(t('btn_browse'))
-        self.btn_save_preset.setText(t('btn_save_preset'))
-        self.btn_delete_preset.setText(t('btn_delete_preset'))
-        self.btn_select.setText(t('btn_select_files'))
-        self.btn_select_folder.setText(t('btn_select_folder'))
-        self.btn_out_folder.setText(t('btn_out_folder'))
+        for attr in ['btn_select_css', 'btn_select_docx']:
+            if hasattr(self, attr):
+                getattr(self, attr).setText(t('btn_browse'))
+        for attr, key in [('btn_save_preset', 'btn_save_preset'), ('btn_delete_preset', 'btn_delete_preset'),
+                          ('btn_select', 'btn_select_files'), ('btn_select_folder', 'btn_select_folder'),
+                          ('btn_cancel', 'btn_cancel')]:
+            if hasattr(self, attr):
+                getattr(self, attr).setText(t(key))
         
-        if self.watch_active:
-            self.btn_watch.setText(t('btn_watch_on'))
-        else:
-            self.btn_watch.setText(t('btn_watch_off'))
-            
-        self.btn_cancel.setText(t('btn_cancel'))
+        if hasattr(self, 'btn_convert'):
+            fmt = self.format_combo.currentText()
+            self.btn_convert.setText(f"Convert to {fmt}")
         
-        # Dynamic Text update for convert button
-        fmt = self.format_combo.currentData()
-        self.btn_convert.setText(t('btn_convert').format(fmt))
+        # Search
+        if hasattr(self, 'label_search_find'):
+            self.label_search_find.setText(t('search_find_lbl'))
+        if hasattr(self, 'label_search_replace'):
+            self.label_search_replace.setText(t('search_replace_lbl'))
+        if hasattr(self, 'btn_search_next'):
+            self.btn_search_next.setText(t('btn_find_next'))
+        if hasattr(self, 'btn_replace_all'):
+            self.btn_replace_all.setText(t('btn_replace_all'))
+        if hasattr(self, 'search_regex_checkbox'):
+            self.search_regex_checkbox.setText(t('search_regex_lbl'))
         
-        # Tab headers
-        self.tabs.setTabText(0, t('tab_log'))
-        self.tabs.setTabText(1, t('tab_editor'))
+        # Tooltips for toolbar buttons
+        tip_map = {
+            'btn_format_bold': 'tip_format_bold', 'btn_format_italic': 'tip_format_italic',
+            'btn_format_h1': 'tip_format_h1', 'btn_format_h2': 'tip_format_h2',
+            'btn_format_code': 'tip_format_code', 'btn_format_quote': 'tip_format_quote',
+            'btn_format_list': 'tip_format_list', 'btn_format_pagebreak': 'tip_format_pagebreak',
+        }
+        for btn, key in tip_map.items():
+            if hasattr(self, btn) and key in TRANSLATIONS.get(self.current_lang, {}):
+                getattr(self, btn).setToolTip(t(key))
         
-        # Search & Replace and Export History retranslate
-        self.history_group.setTitle(t('history_title'))
-        self.label_search_find.setText(t('search_find_lbl'))
-        self.label_search_replace.setText(t('search_replace_lbl'))
-        self.btn_search_next.setText(t('btn_find_next'))
-        self.btn_replace_all.setText(t('btn_replace_all'))
-        self.search_regex_checkbox.setText(t('search_regex_lbl'))
-        
-        # Tooltips
-        self.btn_format_bold.setToolTip(t('tip_format_bold'))
-        self.btn_format_italic.setToolTip(t('tip_format_italic'))
-        self.btn_format_h1.setToolTip(t('tip_format_h1'))
-        self.btn_format_h2.setToolTip(t('tip_format_h2'))
-        self.btn_format_code.setToolTip(t('tip_format_code'))
-        self.btn_format_quote.setToolTip(t('tip_format_quote'))
-        self.btn_format_list.setToolTip(t('tip_format_list'))
-        self.btn_format_pagebreak.setToolTip(t('tip_format_pagebreak'))
-        
-        self.btn_design_style.setText(t('btn_design_style'))
-        self.btn_design_style.setToolTip(t('tip_btn_design_style'))
-        self.btn_print.setText(t('btn_print'))
-        self.btn_copy_html.setText(t('btn_copy_html'))
-        self.btn_merge_files.setText(t('btn_merge_files'))
-        self.btn_snippets.setText(t('btn_snippets'))
-        self.btn_snippets.setToolTip(t('tip_btn_snippets'))
-        self.btn_zen.setText(t('btn_zen'))
-        self.btn_zen.setToolTip(t('tip_btn_zen'))
-        self.btn_format.setText(t('btn_format'))
-        self.btn_format.setToolTip(t('tip_btn_format'))
-        self.btn_history.setText(t('btn_history'))
-        self.btn_history.setToolTip(t('tip_btn_history'))
-        self.btn_audit.setText(t('btn_audit'))
-        self.btn_audit.setToolTip(t('tip_btn_audit'))
-        self.btn_toc.setText(t('btn_toc'))
-        self.btn_toc.setToolTip(t('tip_btn_toc'))
-        
-        self.explorer_group.setTitle(t('explorer_title'))
-        self.explorer_search.setPlaceholderText(t('explorer_search_placeholder'))
+        if hasattr(self, 'btn_print'):
+            self.btn_print.setText(t('btn_print'))
+        if hasattr(self, 'btn_copy_html'):
+            self.btn_copy_html.setText(t('btn_copy_html'))
         
         self.update_text_statistics()
-        self.update_export_history_ui()
+        
+        if hasattr(self, 'explorer_group'):
+            self.explorer_group.setTitle(t('explorer_title'))
+        if hasattr(self, 'explorer_search'):
+            self.explorer_search.setPlaceholderText(t('explorer_search_placeholder'))
         
         if not self.selected_files:
             self.file_label.setText(t('file_not_selected'))
@@ -937,8 +929,6 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
         
         if self.writing_goal > 0:
             pct = min(100, int((word_count / self.writing_goal) * 100))
-            self.goal_progress.setValue(pct)
-            self.goal_progress.show()
             stats_text += f" | 🎯 {pct}% ({word_count}/{self.writing_goal} {t('stats_words').format('').strip()})"
             
             if pct >= 100 and not self.goal_celebrated:
@@ -948,8 +938,6 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
                     t('goal_celebrate_title'),
                     t('goal_celebrate_desc').format(self.writing_goal)
                 )
-        else:
-            self.goal_progress.hide()
             
         self.stats_label.setText(stats_text)
 
@@ -1158,421 +1146,10 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
                         self.live_editor.setPlainText(content)
                         self.update_preview_from_editor()
                     break
-
-    def show_diff_dialog(self):
-        from src.gui.dialogs import DiffDialog
-        dlg = DiffDialog(self, self.current_lang)
-        dlg.exec()
-
-    def toggle_split_view(self):
-        modes = ['both', 'editor', 'preview']
-        current = getattr(self, '_split_view_mode', 'both')
-        idx = (modes.index(current) + 1) % len(modes)
-        self._split_view_mode = modes[idx]
-
-        if self._split_view_mode == 'both':
-            self.editor_splitter.setSizes([200, 400, 400])
-            self.preview_output.show()
-            self.live_editor.show()
-        elif self._split_view_mode == 'editor':
-            self.editor_splitter.setSizes([0, 1, 0])
-            self.preview_output.hide()
-            self.live_editor.show()
-        elif self._split_view_mode == 'preview':
-            self.editor_splitter.setSizes([0, 0, 1])
-            self.live_editor.hide()
-            self.preview_output.show()
-
-        labels = {'both': '📏 Оба', 'editor': '📝 Редактор', 'preview': '👁 Превью'}
-        if hasattr(self, 'btn_split_view'):
-            self.btn_split_view.setText(labels[self._split_view_mode])
-
-    def toggle_wysiwyg(self):
-        if not hasattr(self, '_wysiwyg_active'):
-            self._wysiwyg_active = False
-
-        self._wysiwyg_active = not self._wysiwyg_active
-
-        if self._wysiwyg_active:
-            self.editor_splitter.setSizes([0, 0, 1])
-            self.live_editor.hide()
-            self.preview_output.show()
-            self._render_live_preview()
-            if hasattr(self, 'btn_wysiwyg'):
-                self.btn_wysiwyg.setText("📝 MD")
-        else:
-            self.editor_splitter.setSizes([0, 400, 400])
-            self.live_editor.show()
-            self.preview_output.show()
-            if hasattr(self, 'btn_wysiwyg'):
-                self.btn_wysiwyg.setText("✨ WYSIWYG")
-
-    def run_linter(self):
-        from src.core.linter import lint_markdown
-        text = self.live_editor.toPlainText()
-        issues = lint_markdown(text, self.current_lang)
-
-        if not issues:
-            QMessageBox.information(self, "Lint", "✅ Ошибок не найдено" if self.current_lang == "ru" else "✅ No issues found")
-            return
-
-        severity_icons = {'error': '❌', 'warning': '⚠️', 'info': 'ℹ️'}
-        lines = [f"<b>{len(issues)} проблем(а):</b><br><br>"]
-        for issue in sorted(issues, key=lambda x: x.line):
-            icon = severity_icons.get(issue.severity, '')
-            lines.append(f"{icon} <b>Стр. {issue.line}</b>: {issue.message} <span style='color:#999'>({issue.rule})</span><br>")
-
-        dlg = QDialog(self)
-        dlg.setWindowTitle("Результаты линтинга")
-        dlg.setMinimumSize(500, 400)
-        layout = QVBoxLayout(dlg)
-        browser = QTextBrowser()
-        browser.setHtml(''.join(lines))
-        layout.addWidget(browser)
-        btn_close = QPushButton("Закрыть")
-        btn_close.clicked.connect(dlg.close)
-        layout.addWidget(btn_close)
-        dlg.exec()
-
-    def show_toc_generator(self):
-        dialog = MarkdownTOCDialog(parent=self, lang=self.current_lang)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            max_depth = dialog.depth_combo.currentData()
-            list_style = dialog.style_combo.currentData()
-            use_anchors = dialog.anchors_chk.isChecked()
-            
-            text = self.live_editor.toPlainText()
-            lines = text.splitlines()
-            
-            import re
-            toc_lines = []
-            
-            h1_count = 0
-            h2_count = 0
-            h3_count = 0
-            
-            toc_lines.append("## Оглавление" if self.current_lang == "ru" else "## Table of Contents")
-            toc_lines.append("")
-            
-            for line in lines:
-                m = re.match(r'^(#{1,3})\s+(.*)$', line)
-                if m:
-                    level = len(m.group(1))
-                    title = m.group(2).strip()
-                    
-                    if level > max_depth or not title:
-                        continue
-                        
-                    # Build a standard anchor format, same as Python-Markdown TOC extension
-                    anchor_name = re.sub(r'[^\w\s-]', '', title.lower()).strip().replace(' ', '-')
-                    
-                    if list_style == "bullet":
-                        indent = "  " * (level - 1)
-                        if use_anchors:
-                            item_text = f"{indent}- [{title}](#{anchor_name})"
-                        else:
-                            item_text = f"{indent}- {title}"
-                    else:
-                        if level == 1:
-                            h1_count += 1
-                            h2_count = 0
-                            h3_count = 0
-                            num_str = f"{h1_count}."
-                            indent = ""
-                        elif level == 2:
-                            h2_count += 1
-                            h3_count = 0
-                            num_str = f"{h1_count}.{h2_count}."
-                            indent = "  "
-                        else:
-                            h3_count += 1
-                            num_str = f"{h1_count}.{h2_count}.{h3_count}."
-                            indent = "    "
-                            
-                        if use_anchors:
-                            item_text = f"{indent}{num_str} [{title}](#{anchor_name})"
-                        else:
-                            item_text = f"{indent}{num_str} {title}"
-                            
-                    toc_lines.append(item_text)
-                    
-            if len(toc_lines) <= 2:
-                QMessageBox.warning(
-                    self, 
-                    "Оглавление" if self.current_lang == "ru" else "TOC Builder",
-                    "Заголовки для построения оглавления не найдены!" if self.current_lang == "ru" else "No headings found to generate Table of Contents!"
-                )
-                return
-                
-            toc_content = "\n".join(toc_lines) + "\n\n"
-            
-            cursor = self.live_editor.textCursor()
-            cursor.insertText(toc_content)
-            self.live_editor.setTextCursor(cursor)
-            self.live_editor.setFocus()
-
-    def update_markdown_toc_in_editor(self):
-        text = self.live_editor.toPlainText()
-        
-        lines = text.splitlines()
-        headings = []
-        import re
-        
-        in_code_block = False
-        
-        for idx, line in enumerate(lines):
-            stripped = line.strip()
-            if stripped.startswith("```"):
-                in_code_block = not in_code_block
-                continue
-            if in_code_block:
-                continue
-                
-            m = re.match(r'^(#{1,3})\s+(.*)$', line)
-            if m:
-                level = len(m.group(1))
-                title = m.group(2).strip()
-                if title and not title.startswith("<!--") and not title.endswith("-->"):
-                    headings.append((level, title))
-                    
-        toc_lines = []
-        toc_lines.append("## " + ("Оглавление" if self.current_lang == "ru" else "Table of Contents"))
-        toc_lines.append("")
-        
-        for level, title in headings:
-            anchor_name = re.sub(r'[^\w\s-]', '', title.lower()).strip().replace(' ', '-')
-            indent = "  " * (level - 1)
-            toc_lines.append(f"{indent}- [{title}](#{anchor_name})")
-            
-        toc_body = "\n".join(toc_lines)
-        
-        start_marker = "<!-- TOC START -->"
-        end_marker = "<!-- TOC END -->"
-        
-        if start_marker in text and end_marker in text:
-            start_idx = text.find(start_marker)
-            end_idx = text.find(end_marker) + len(end_marker)
-            
-            new_text = (
-                text[:start_idx] +
-                start_marker + "\n\n" +
-                toc_body + "\n\n" +
-                text[end_idx:]
-            )
-        else:
-            cursor = self.live_editor.textCursor()
-            insert_text = f"\n{start_marker}\n\n{toc_body}\n\n{end_marker}\n"
-            
-            cursor.insertText(insert_text)
-            self.live_editor.setFocus()
-            new_text = self.live_editor.toPlainText()
-            
-        if new_text != text:
-            scroll_pos = self.live_editor.verticalScrollBar().value()
-            cursor_pos = self.live_editor.textCursor().position()
-            
-            self.live_editor.blockSignals(True)
-            self.live_editor.setPlainText(new_text)
-            self.live_editor.blockSignals(False)
-            
-            self._render_live_preview()
-            self.update_text_statistics()
-            
-            self.live_editor.verticalScrollBar().setValue(scroll_pos)
-            
-            cursor = self.live_editor.textCursor()
-            cursor.setPosition(min(cursor_pos, len(new_text)))
-            self.live_editor.setTextCursor(cursor)
-            
-        t = lambda k: TRANSLATIONS[self.current_lang].get(k, k)
-        QMessageBox.information(
-            self,
-            t('msg_toc_updated_title'),
-            t('msg_toc_updated_desc')
-        )
-
-    def load_workspace_file(self, item):
-        file_manager.load_workspace_file(self, item)
-
-    def update_workspace_explorer(self):
-        file_manager.update_workspace_explorer(self)
-
-    def filter_workspace_explorer(self, text):
-        file_manager.filter_workspace_explorer(self, text)
-
-    def restore_draft_if_exists(self):
-        document_tools.restore_draft_if_exists(self)
-
-    def open_output_folder(self):
-        file_manager.open_output_folder(self)
-
-    def show_table_generator_dialog(self):
-        document_tools.show_table_generator_dialog(self)
-
-    def zoom_in(self):
-        preview_manager.zoom_in(self)
-
-    def zoom_out(self):
-        preview_manager.zoom_out(self)
-
-    def zoom_reset(self):
-        preview_manager.zoom_reset(self)
-
-
-
     # ─── Quick Formatting Methods ───
 
     def _wrap_selection(self, prefix: str, suffix: str):
         editor_commands._wrap_selection(self, prefix, suffix)
-
-    def format_bold(self):
-        editor_commands.format_bold(self)
-
-    def format_italic(self):
-        editor_commands.format_italic(self)
-
-    def format_code(self):
-        editor_commands.format_code(self)
-
-    def format_header(self, level: int):
-        editor_commands.format_header(self, level)
-
-    def format_quote(self):
-        editor_commands.format_quote(self)
-
-    def format_list(self):
-        editor_commands.format_list(self)
-
-    def insert_page_break(self):
-        editor_commands.insert_page_break(self)
-
-    def print_document(self):
-        preview_manager.print_document(self)
-
-    def copy_styled_html(self):
-        preview_manager.copy_styled_html(self)
-
-    def show_design_style_dialog(self):
-        document_tools.show_design_style_dialog(self)
-
-    def print_document_direct(self):
-        """Print directly without preview using system printer."""
-        from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
-        from PyQt6.QtGui import QTextDocument
-        printer = QPrinter()
-        dlg = QPrintDialog(printer, self)
-        if dlg.exec():
-            doc = QTextDocument()
-            doc.setHtml(self.preview_output.toHtml())
-            doc.print_(printer)
-
-    def export_selection(self):
-        """Export only selected text from editor."""
-        cursor = self.live_editor.textCursor()
-        selected = cursor.selectedText()
-        if not selected:
-            QMessageBox.information(self, "Экспорт", "Выделите текст для экспорта")
-            return
-
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Экспорт выделенного", "",
-            "Markdown (*.md);;Text (*.txt);;HTML (*.html)"
-        )
-        if path:
-            with open(path, 'w', encoding='utf-8') as f:
-                f.write(selected)
-            self.append_log(f"✅ Экспорт выделенного: {path}")
-
-    def export_as_markdown(self):
-        """Save current editor content as formatted Markdown file."""
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Сохранить как Markdown", "",
-            "Markdown (*.md)"
-        )
-        if path:
-            text = self.live_editor.toPlainText()
-            with open(path, 'w', encoding='utf-8') as f:
-                f.write(text)
-            self.append_log(f"✅ Сохранено: {path}")
-
-    def show_conversion_history(self):
-        """Show conversion history with ability to reopen files."""
-        history = self.export_history if hasattr(self, 'export_history') else []
-        if not history:
-            QMessageBox.information(self, "История", "История конвертаций пуста")
-            return
-
-        items = []
-        for path in history[:20]:
-            if os.path.exists(path):
-                mtime = os.path.getmtime(path)
-                dt = datetime.fromtimestamp(mtime).strftime("%d.%m.%Y %H:%M")
-                items.append(f"{os.path.basename(path)}  ({dt})")
-
-        chosen, ok = QInputDialog.getItem(
-            self, "История конвертаций", "Файл:",
-            items, 0, False
-        )
-        if ok and chosen:
-            idx = items.index(chosen)
-            path = history[idx]
-            if os.path.exists(path):
-                import subprocess
-                os.startfile(path)
-
-    def show_cloud_templates(self):
-        from src.gui.dialogs import CloudTemplatesDialog
-        dlg = CloudTemplatesDialog(self, self.current_lang)
-        if dlg.exec() and dlg.selected_content:
-            self.live_editor.setPlainText(dlg.selected_content)
-            self.update_preview_from_editor()
-
-    # ─── Focus Mode ───
-
-    def toggle_focus_mode(self):
-        """Toggle focus mode - dims everything except current paragraph."""
-        if not hasattr(self, '_focus_mode_active'):
-            self._focus_mode_active = False
-
-        self._focus_mode_active = not self._focus_mode_active
-
-        if self._focus_mode_active:
-            self.live_editor.setStyleSheet("""
-                QTextEdit {
-                    background-color: #1a1a2e;
-                    color: #e0e0e0;
-                    font-size: 16pt;
-                    line-height: 1.8;
-                    padding: 40px;
-                    selection-background-color: #6366f1;
-                }
-            """)
-            self.live_editor.setFocus()
-        else:
-            self.live_editor.setStyleSheet("")
-            if self.is_dark:
-                self.live_editor.setStyleSheet("QTextEdit { background-color: rgba(30, 41, 59, 0.85); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; selection-background-color: #4f46e5; }")
-            else:
-                self.live_editor.setStyleSheet("QTextEdit { background-color: rgba(255, 255, 255, 0.9); color: #334155; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; selection-background-color: #818cf8; }")
-
-    def toggle_sentence_focus(self):
-        """Highlight only the current sentence in the editor."""
-        cursor = self.live_editor.textCursor()
-        text = self.live_editor.toPlainText()
-        pos = cursor.position()
-
-        # Find current sentence boundaries
-        import re
-        sentences = list(re.finditer(r'[^.!?]*[.!?]+', text, re.DOTALL))
-
-        for match in sentences:
-            if match.start() <= pos <= match.end():
-                # Select the current sentence
-                cursor.setPosition(match.start())
-                cursor.setPosition(match.end(), cursor.MoveMode.KeepAnchor)
-                self.live_editor.setTextCursor(cursor)
-                break
-
     # ─── Emoji Shortcodes ───
 
     EMOJI_MAP = {
@@ -1588,159 +1165,6 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
         ':arrow_down:': '⬇️', ':white_check:': '✅', ':red_circle:': '🔴',
         ':green_circle:': '🟢', ':blue_circle:': '🔵', ':large_circle:': '⭕',
     }
-
-    def convert_emoji_shortcodes(self):
-        """Replace :shortcode: with actual emoji in editor."""
-        text = self.live_editor.toPlainText()
-        for code, emoji in self.EMOJI_MAP.items():
-            text = text.replace(code, emoji)
-        self.live_editor.setPlainText(text)
-
-    # ─── Document Versioning ───
-
-    def save_version(self, label=""):
-        """Save a named version of the current document."""
-        if not hasattr(self, '_versions'):
-            self._versions = []
-
-        text = self.live_editor.toPlainText()
-        version = {
-            'label': label or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'content': text,
-            'timestamp': datetime.now().isoformat(),
-            'word_count': len(text.split()),
-        }
-        self._versions.append(version)
-
-        # Keep only last 50 versions
-        if len(self._versions) > 50:
-            self._versions = self._versions[-50:]
-
-        self.append_log(f"📌 Версия сохранена: {version['label']}")
-
-    def restore_version(self):
-        """Restore a previously saved version."""
-        if not hasattr(self, '_versions') or not self._versions:
-            QMessageBox.information(self, "Версии", "Нет сохранённых версий")
-            return
-
-        items = [f"{v['label']} ({v['word_count']} слов)" for v in self._versions]
-        chosen, ok = QInputDialog.getItem(
-            self, "Восстановить версию", "Версия:",
-            items, len(items) - 1, False
-        )
-        if ok and chosen:
-            idx = items.index(chosen)
-            self.live_editor.setPlainText(self._versions[idx]['content'])
-            self.update_preview_from_editor()
-
-    def show_version_diff(self):
-        """Show diff between current and a saved version."""
-        if not hasattr(self, '_versions') or not self._versions:
-            QMessageBox.information(self, "Версии", "Нет сохранённых версий")
-            return
-
-        items = [f"{v['label']} ({v['word_count']} слов)" for v in self._versions]
-        chosen, ok = QInputDialog.getItem(
-            self, "Сравнить с версией", "Версия:",
-            items, len(items) - 1, False
-        )
-        if ok and chosen:
-            idx = items.index(chosen)
-            import difflib
-            old = self._versions[idx]['content'].splitlines(keepends=True)
-            new = self.live_editor.toPlainText().splitlines(keepends=True)
-            diff = list(difflib.unified_diff(old, new, fromfile='Версия', tofile='Текущая', lineterm=''))
-
-            html = ['<pre style="font-family: monospace; font-size: 12px;">']
-            for line in diff:
-                escaped = line.replace('&', '&amp;').replace('<', '&lt;').rstrip()
-                if line.startswith('+'):
-                    html.append(f'<span style="background: #d5f5e3; color: #27ae60;">{escaped}</span>')
-                elif line.startswith('-'):
-                    html.append(f'<span style="background: #fadbd8; color: #e74c3c;">{escaped}</span>')
-                elif line.startswith('@@'):
-                    html.append(f'<span style="color: #9b59b6;">{escaped}</span>')
-                else:
-                    html.append(escaped)
-            html.append('</pre>')
-
-            dlg = QDialog(self)
-            dlg.setWindowTitle("Diff версий")
-            dlg.setMinimumSize(600, 400)
-            layout = QVBoxLayout(dlg)
-            browser = QTextBrowser()
-            browser.setHtml('\n'.join(html))
-            layout.addWidget(browser)
-            btn = QPushButton("Закрыть")
-            btn.clicked.connect(dlg.close)
-            layout.addWidget(btn)
-            dlg.exec()
-
-    # ─── Spell Check ───
-
-    def run_spell_check(self):
-        """Basic spell check using dictionary file or simple word check."""
-        text = self.live_editor.toPlainText()
-        words = set()
-        import re
-        for word in re.findall(r'\b[a-zA-Zа-яА-ЯёЁ]{3,}\b', text):
-            words.add(word.lower())
-
-        # Common misspellings dictionary (English)
-        common_misspells = {
-            'teh': 'the', 'adn': 'and', 'taht': 'that', 'wiht': 'with',
-            'thier': 'their', 'recieve': 'receive', 'seperate': 'separate',
-            'occured': 'occurred', 'definately': 'definitely', 'accomodate': 'accommodate',
-            'occurence': 'occurrence', 'untill': 'until', 'wierd': 'weird',
-            'begining': 'beginning', 'freind': 'friend', 'goverment': 'government',
-        }
-
-        issues = []
-        for word in words:
-            if word in common_misspells:
-                issues.append((word, common_misspells[word]))
-
-        if issues:
-            msg = "Возможные ошибки:\n\n" + "\n".join(f"• {w} → {c}" for w, c in issues[:20])
-            QMessageBox.information(self, "Spell Check", msg)
-        else:
-            QMessageBox.information(self, "Spell Check", "✅ Ошибок не найдено")
-
-    # ─── Wikilinks ───
-
-    def process_wikilinks(self):
-        from src.core.wikilinks import WikiLinkProcessor
-        text = self.live_editor.toPlainText()
-        processor = WikiLinkProcessor(os.path.dirname(self.selected_files[0]) if self.selected_files else os.getcwd())
-        processed = processor.resolve_links(text)
-        self.live_editor.setPlainText(processed)
-
-    def show_transclusion(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Выберите файл", "", "Markdown (*.md)")
-        if path:
-            cursor = self.live_editor.textCursor()
-            cursor.insertText(f"{{{{include:{os.path.basename(path)}}}}}")
-
-    # ─── Graph View ───
-
-    def show_graph_view(self):
-        from src.core.wikilinks import GraphBuilder
-        base_dir = os.path.dirname(self.selected_files[0]) if self.selected_files else os.getcwd()
-        builder = GraphBuilder(base_dir)
-        html = builder.build_graph_html()
-        dlg = QDialog(self)
-        dlg.setWindowTitle("Graph View")
-        dlg.setMinimumSize(800, 600)
-        layout = QVBoxLayout(dlg)
-        browser = QTextBrowser()
-        browser.setHtml(html)
-        layout.addWidget(browser)
-        btn = QPushButton("Закрыть")
-        btn.clicked.connect(dlg.close)
-        layout.addWidget(btn)
-        dlg.exec()
-
     # ─── Voice-to-Text ───
 
     def start_voice_input(self):
@@ -1835,68 +1259,6 @@ body{{font-family:sans-serif;padding:20px;}}
         btn = QPushButton("Закрыть"); btn.clicked.connect(dlg.close); layout.addWidget(btn)
         dlg.exec()
 
-    # ─── Tags Cloud ───
-
-    def show_tag_cloud(self):
-        from src.core.wikilinks import WikiLinkProcessor
-        from collections import Counter
-        import random
-        text = self.live_editor.toPlainText()
-        tags = WikiLinkProcessor().extract_tags(text)
-        if not tags:
-            QMessageBox.information(self, "Теги", "Теги не найдены (#тег)")
-            return
-        counts = Counter(tags)
-        colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c']
-        words = [f'<span style="font-size:{14+c*6}px;color:{random.choice(colors)};margin:4px 8px;display:inline-block;">#{t}</span>' for t, c in counts.most_common(30)]
-        html = f"<html><body style='text-align:center;padding:20px;'><h2>Tags</h2><p style='line-height:2;'>{''.join(words)}</p></body></html>"
-        dlg = QDialog(self); dlg.setWindowTitle("Облако тегов"); dlg.setMinimumSize(500, 300)
-        layout = QVBoxLayout(dlg)
-        browser = QTextBrowser(); browser.setHtml(html); layout.addWidget(browser)
-        btn = QPushButton("Закрыть"); btn.clicked.connect(dlg.close); layout.addWidget(btn)
-        dlg.exec()
-
-    # ─── Typewriter Mode ───
-
-    def toggle_typewriter_mode(self):
-        if not hasattr(self, '_typewriter_active'):
-            self._typewriter_active = False
-        self._typewriter_active = not self._typewriter_active
-        if self._typewriter_active:
-            self.live_editor.setStyleSheet(self.live_editor.styleSheet() + " QTextEdit { padding-top: 200px; padding-bottom: 200px; }")
-        else:
-            bg = "#1e1e2e" if self.is_dark else "#ffffff"
-            fg = "#cdd6f4" if self.is_dark else "#2c3e50"
-            self.live_editor.setStyleSheet(f"QTextEdit {{ background-color: {bg}; color: {fg}; }}")
-
-    # ─── Reading Analytics ───
-
-    def show_reading_analytics(self):
-        text = self.live_editor.toPlainText()
-        import re
-        words = text.split()
-        wc = len(words)
-        cc = len(text)
-        sc = len(re.findall(r'[.!?]+', text))
-        pc = len([p for p in text.split('\n\n') if p.strip()])
-        rt = max(1, round(wc / 180))
-        syllables = sum(max(1, len(re.findall(r'[аеёиоуыэюя]', w.lower()))) for w in words)
-        asl = wc / max(1, sc); asw = syllables / max(1, wc)
-        flesch = max(0, min(100, 206.835 - 1.3 * asl - 60.1 * asw))
-        html = f"""<html><body style="font-family:sans-serif;padding:20px;text-align:center;">
-<h2>📊 Analytics</h2>
-<div style="display:flex;justify-content:center;flex-wrap:wrap;">
-<div style="background:#f8f9fa;border-radius:8px;padding:16px 24px;margin:8px;text-align:center;"><div style="font-size:28px;font-weight:bold;">{wc}</div><div style="color:#999;font-size:12px;">Слов</div></div>
-<div style="background:#f8f9fa;border-radius:8px;padding:16px 24px;margin:8px;text-align:center;"><div style="font-size:28px;font-weight:bold;">{cc}</div><div style="color:#999;font-size:12px;">Символов</div></div>
-<div style="background:#f8f9fa;border-radius:8px;padding:16px 24px;margin:8px;text-align:center;"><div style="font-size:28px;font-weight:bold;">{rt} мин</div><div style="color:#999;font-size:12px;">Чтение</div></div>
-<div style="background:#f8f9fa;border-radius:8px;padding:16px 24px;margin:8px;text-align:center;"><div style="font-size:28px;font-weight:bold;">{flesch:.0f}</div><div style="color:#999;font-size:12px;">Читаемость</div></div>
-</div></body></html>"""
-        dlg = QDialog(self); dlg.setWindowTitle("Analytics"); dlg.setMinimumSize(500, 300)
-        layout = QVBoxLayout(dlg)
-        browser = QTextBrowser(); browser.setHtml(html); layout.addWidget(browser)
-        btn = QPushButton("Закрыть"); btn.clicked.connect(dlg.close); layout.addWidget(btn)
-        dlg.exec()
-
     # ─── API Docs Generator ───
 
     def generate_api_docs(self):
@@ -1947,118 +1309,6 @@ body{{font-family:sans-serif;padding:20px;}}
 
     def sync_scroll_preview(self, value):
         preview_manager.sync_scroll_preview(self, value)
-
-    def toggle_zen_mode(self):
-        self.is_zen_mode = not getattr(self, 'is_zen_mode', False)
-        
-        self.settings_group.setVisible(not self.is_zen_mode)
-        self.history_group.setVisible(not self.is_zen_mode)
-        self.log_output.setVisible(not self.is_zen_mode)
-        self.tabs.setTabVisible(0, not self.is_zen_mode)
-        
-        if self.is_zen_mode:
-            self.btn_zen.setStyleSheet("""
-                QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #c2410c,stop:1 #ea580c); color: white; border: none; font-weight: bold; padding: 4px 10px; border-radius: 6px; }
-            """)
-        else:
-            self.btn_zen.setStyleSheet("""
-                QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #ea580c,stop:1 #f97316); color: white; border: none; font-weight: bold; padding: 4px 10px; border-radius: 6px; }
-                QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #c2410c,stop:1 #ea580c); }
-            """)
-
-    def format_markdown_document(self):
-        editor_commands.format_markdown_document(self)
-
-    # ─── PDF → Markdown (OCR) ───
-
-    def pdf_to_markdown_convert(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Select PDF", "", "PDF (*.pdf)")
-        if not path:
-            return
-        try:
-            from src.core.pdf_to_markdown import pdf_to_markdown_file
-            out = pdf_to_markdown_file(path)
-            with open(out, "r", encoding="utf-8") as f:
-                content = f.read()
-            self.live_editor.setPlainText(content)
-            self._render_live_preview()
-            self.append_log(f"📄 PDF → Markdown: {out}")
-            QMessageBox.information(self, "PDF → Markdown", f"Extracted to:\n{out}")
-        except ImportError:
-            QMessageBox.warning(self, "Error", "Install pypdf: pip install pypdf")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
-
-    # ─── GitHub Sync ───
-
-    def show_github_sync_dialog(self):
-        from src.gui.dialogs import GitHubSyncDialog
-        folder = self.active_workspace_folder or os.getcwd()
-        dlg = GitHubSyncDialog(self, folder, self.current_lang)
-        dlg.exec()
-
-    # ─── Multi-cursor ───
-
-    def add_multi_cursor(self):
-        cursor = self.live_editor.textCursor()
-        line = cursor.blockNumber()
-        self.multi_cursor.add_cursor_at_line(line)
-
-    def clear_multi_cursors(self):
-        self.multi_cursor.clear_cursors()
-
-    # ─── Plugin Manager ───
-
-    def show_plugin_manager(self):
-        from src.gui.dialogs import PluginManagerDialog
-        dlg = PluginManagerDialog(self, self.current_lang)
-        dlg.exec()
-
-    # ─── Excalidraw ───
-
-    def show_excalidraw(self):
-        from src.gui.excalidraw_canvas import ExcalidrawDialog
-        dlg = ExcalidrawDialog(self, self.current_lang)
-        if dlg.exec() and dlg.selected_markdown:
-            cursor = self.live_editor.textCursor()
-            cursor.insertText(dlg.selected_markdown)
-            self._render_live_preview()
-
-    # ─── CSV Editor ───
-
-    def show_csv_editor(self):
-        from src.gui.csv_editor import CSVEditorDialog
-        dlg = CSVEditorDialog(self, self.current_lang)
-        if dlg.exec() and dlg.selected_markdown:
-            cursor = self.live_editor.textCursor()
-            cursor.insertText(dlg.selected_markdown)
-            self._render_live_preview()
-
-    # ─── Template Variables ───
-
-    def apply_template_vars(self):
-        text = self.live_editor.toPlainText()
-        filename = self.selected_files[0] if self.selected_files else ""
-        result = process_document_vars(text, filename)
-        self.live_editor.setPlainText(result)
-        self._render_live_preview()
-        self.append_log("🔧 Template variables applied")
-
-    # ─── Calendar Notes ───
-
-    def show_calendar_notes(self):
-        from src.gui.calendar_view import CalendarNotesDialog
-        folder = self.active_workspace_folder or os.getcwd()
-        dlg = CalendarNotesDialog(self, self.current_lang, folder)
-        dlg.exec()
-
-    # ─── Pomodoro Timer ───
-
-    def show_pomodoro(self):
-        from src.gui.pomodoro import PomodoroDialog
-        dlg = PomodoroDialog(self, self.current_lang)
-        dlg.exec()
-
     # ─── Writing Goals (enhanced) ───
 
     def set_writing_goal(self):
@@ -2079,399 +1329,3 @@ body{{font-family:sans-serif;padding:20px;}}
         """Show a modern toast notification."""
         return ToastNotification.show_toast(self, message, toast_type, duration)
 
-    # ─── About Dialog ───
-
-    def show_about(self):
-        from src.__version__ import __version__
-        dlg = AboutDialog(self, __version__, self.current_lang)
-        dlg.exec()
-
-    def show_shortcuts(self):
-        from src.gui.dialogs import ShortcutsDialog
-        dlg = ShortcutsDialog(self, self.current_lang)
-        dlg.exec()
-
-    # ─── Welcome Tour ───
-
-    def show_welcome_tour(self):
-        from src.gui.welcome_tour import WelcomeTourDialog
-        dlg = WelcomeTourDialog(self, self.current_lang)
-        dlg.exec()
-
-    # ─── Custom Title Bar ───
-
-    def _setup_custom_titlebar(self):
-        """Enable custom frameless title bar."""
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-        self._titlebar = CustomTitleBar(self, self.windowTitle())
-        self._titlebar.setGeometry(0, 0, self.width(), 42)
-        self._titlebar.show()
-
-    # ─── Ambient Glow ───
-
-    def _setup_ambient_glow(self):
-        """Enable animated ambient glow orbs."""
-        self._glow = AmbientGlowWidget(self)
-        self._glow.setGeometry(0, 0, self.width(), self.height())
-        self._glow.lower()
-        self._glow.show()
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        if hasattr(self, '_glow') and self._glow.isVisible():
-            self._glow.setGeometry(0, 0, self.width(), self.height())
-        if hasattr(self, '_titlebar') and self._titlebar.isVisible():
-            self._titlebar.setGeometry(0, 0, self.width(), 42)
-
-    # ─── Image → Text (OCR) ───
-
-    def ocr_image_to_text(self):
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Select Image for OCR", "",
-            "Images (*.png *.jpg *.jpeg *.bmp *.tiff *.webp)"
-        )
-        if not path:
-            return
-        try:
-            from src.core.ocr_engine import image_to_markdown
-            md = image_to_markdown(path)
-            cursor = self.live_editor.textCursor()
-            cursor.insertText(md)
-            self._render_live_preview()
-            self.append_log(f"🖼 OCR completed: {os.path.basename(path)}")
-        except ImportError:
-            QMessageBox.warning(self, "OCR", "Install: pip install pytesseract Pillow\nAlso install Tesseract OCR from https://github.com/tesseract-ocr/tesseract")
-        except Exception as e:
-            QMessageBox.critical(self, "OCR Error", str(e))
-
-    # ─── LaTeX Preview ───
-
-    def show_latex_preview(self):
-        from src.core.latex_preview import find_latex_expressions, latex_to_url
-        text = self.live_editor.toPlainText()
-        expressions = find_latex_expressions(text)
-
-        if not expressions:
-            QMessageBox.information(self, "LaTeX", "No LaTeX expressions found (use $...$ or $$...$$)")
-            return
-
-        html_parts = ["<html><head><style>body{font-family:sans-serif;padding:20px;} .expr{margin:16px;padding:12px;background:#f8f9fa;border-radius:8px;border:1px solid #dfe4ea;} .src{font-family:monospace;color:#7f8c8d;font-size:12px;}</style></head><body>"]
-        html_parts.append(f"<h2>📐 LaTeX Preview ({len(expressions)} expressions)</h2>")
-
-        for start, end, formula in expressions:
-            url = latex_to_url(formula)
-            html_parts.append(f'<div class="expr"><img src="{url}" alt="{formula}" style="max-width:100%;"/><br><span class="src">{formula}</span></div>')
-
-        html_parts.append("</body></html>")
-
-        dlg = QDialog(self)
-        dlg.setWindowTitle("LaTeX Preview")
-        dlg.setMinimumSize(600, 400)
-        layout = QVBoxLayout(dlg)
-        browser = QTextBrowser()
-        browser.setOpenExternalLinks(True)
-        browser.setHtml('\n'.join(html_parts))
-        layout.addWidget(browser)
-        btn = QPushButton("Close")
-        btn.clicked.connect(dlg.close)
-        layout.addWidget(btn)
-        dlg.exec()
-
-    # ─── Multi-Export ───
-
-    def show_multi_export(self):
-        if not self.selected_files:
-            QMessageBox.information(self, "Multi-Export", "Select a file first")
-            return
-
-        from src.gui.dialogs import MultiExportDialog
-        dlg = MultiExportDialog(self, self.current_lang)
-        if dlg.exec():
-            from src.core.multi_export import multi_export, export_summary
-            out_dir = QFileDialog.getExistingDirectory(self, "Output Directory")
-            if not out_dir:
-                return
-            results = multi_export(
-                self.selected_files[0], out_dir, dlg.selected_formats,
-                self._get_template_dir(), self._get_options()
-            )
-            summary = export_summary(results)
-            QMessageBox.information(self, "Multi-Export", summary)
-            self.append_log(f"📦 Multi-export completed: {len(results)} formats")
-
-    # ─── Text-to-Speech ───
-
-    def text_to_speech_speak(self):
-        text = self.live_editor.toPlainText()
-        if not text.strip():
-            QMessageBox.information(self, "TTS", "No text to speak")
-            return
-
-        from src.core.tts_engine import strip_markdown_for_tts, get_tts_engine
-        clean = strip_markdown_for_tts(text)
-        engine = get_tts_engine()
-
-        def on_state(state):
-            icons = {"playing": "🔊", "paused": "⏸", "stopped": "⏹"}
-            self.append_log(f"{icons.get(state, '🔊')} TTS: {state}")
-
-        engine.set_on_state_change(on_state)
-
-        if engine.is_playing():
-            engine.stop()
-            self.toast("TTS остановлен", "info")
-            return
-
-        engine.speak(clean, lang=self.current_lang)
-        self.toast("🔊 Воспроизведение...", "success")
-
-    def show_tts_settings(self):
-        from src.core.tts_engine import get_tts_engine
-        engine = get_tts_engine()
-        voices = engine.get_voices()
-
-        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSlider, QPushButton
-        dlg = QDialog(self)
-        dlg.setWindowTitle("🔊 TTS Settings")
-        dlg.setMinimumWidth(400)
-        layout = QVBoxLayout(dlg)
-
-        # Voice selection
-        voice_layout = QHBoxLayout()
-        voice_layout.addWidget(QLabel("Голос:"))
-        voice_combo = QComboBox()
-        for v in voices:
-            gender_icon = {"male": "👨", "female": "👩", "neutral": "🤖"}.get(v.gender.value, "🔊")
-            premium = " ⭐" if v.is_premium else ""
-            voice_combo.addItem(f"{gender_icon} {v.name} ({v.language}){premium} - {v.description}", v.id)
-        voice_layout.addWidget(voice_combo)
-        layout.addLayout(voice_layout)
-
-        # Speed
-        speed_layout = QHBoxLayout()
-        speed_layout.addWidget(QLabel("Скорость:"))
-        speed_slider = QSlider(Qt.Orientation.Horizontal)
-        speed_slider.setRange(50, 200)
-        speed_slider.setValue(int(engine.settings.speed * 100))
-        speed_label = QLabel(f"{engine.settings.speed:.1f}x")
-        speed_slider.valueChanged.connect(lambda v: speed_label.setText(f"{v/100:.1f}x"))
-        speed_layout.addWidget(speed_slider)
-        speed_layout.addWidget(speed_label)
-        layout.addLayout(speed_layout)
-
-        # Pitch
-        pitch_layout = QHBoxLayout()
-        pitch_layout.addWidget(QLabel("Тон:"))
-        pitch_slider = QSlider(Qt.Orientation.Horizontal)
-        pitch_slider.setRange(50, 200)
-        pitch_slider.setValue(int(engine.settings.pitch * 100))
-        pitch_label = QLabel(f"{engine.settings.pitch:.1f}")
-        pitch_slider.valueChanged.connect(lambda v: pitch_label.setText(f"{v/100:.1f}"))
-        pitch_layout.addWidget(pitch_slider)
-        pitch_layout.addWidget(pitch_label)
-        layout.addLayout(pitch_layout)
-
-        # Volume
-        vol_layout = QHBoxLayout()
-        vol_layout.addWidget(QLabel("Громкость:"))
-        vol_slider = QSlider(Qt.Orientation.Horizontal)
-        vol_slider.setRange(0, 100)
-        vol_slider.setValue(int(engine.settings.volume * 100))
-        vol_label = QLabel(f"{int(engine.settings.volume * 100)}%")
-        vol_slider.valueChanged.connect(lambda v: vol_label.setText(f"{v}%"))
-        vol_layout.addWidget(vol_slider)
-        vol_layout.addWidget(vol_label)
-        layout.addLayout(vol_layout)
-
-        # Pause
-        pause_layout = QHBoxLayout()
-        pause_layout.addWidget(QLabel("Пауза абзацев:"))
-        pause_slider = QSlider(Qt.Orientation.Horizontal)
-        pause_slider.setRange(0, 200)
-        pause_slider.setValue(int(engine.settings.pause_between_paragraphs * 100))
-        pause_label = QLabel(f"{engine.settings.pause_between_paragraphs:.1f}s")
-        pause_slider.valueChanged.connect(lambda v: pause_label.setText(f"{v/100:.1f}s"))
-        pause_layout.addWidget(pause_slider)
-        pause_layout.addWidget(pause_label)
-        layout.addLayout(pause_layout)
-
-        # Buttons
-        btn_layout = QHBoxLayout()
-        btn_export = QPushButton("💾 Export to File")
-        btn_export.clicked.connect(lambda: self._export_tts_audio(engine))
-        btn_layout.addWidget(btn_export)
-
-        btn_close = QPushButton("Закрыть")
-        btn_close.clicked.connect(dlg.accept)
-        btn_layout.addWidget(btn_close)
-        layout.addLayout(btn_layout)
-
-        def apply_settings():
-            engine.set_voice(voice_combo.currentData())
-            engine.set_speed(speed_slider.value() / 100)
-            engine.set_pitch(pitch_slider.value() / 100)
-            engine.set_volume(vol_slider.value() / 100)
-            engine.set_pause_between_paragraphs(pause_slider.value() / 100)
-
-        btn_export.clicked.connect(apply_settings)
-        dlg.exec()
-
-    def _export_tts_audio(self, engine):
-        from PyQt6.QtWidgets import QFileDialog
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export Audio", "speech.mp3",
-            "MP3 (*.mp3);;WAV (*.wav);;All (*)"
-        )
-        if path:
-            text = self.live_editor.toPlainText()
-            clean = strip_markdown_for_tts(text)
-            if engine.export_to_file(clean, path, self.current_lang):
-                self.toast(f"✅ Audio saved: {os.path.basename(path)}", "success")
-            else:
-                self.toast("❌ Export failed", "error")
-
-    # ─── HTML → Markdown ───
-
-    def html_to_markdown_convert(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Select HTML file", "", "HTML (*.html *.htm)")
-        if not path:
-            return
-        with open(path, "r", encoding="utf-8") as f:
-            html = f.read()
-        md = html_to_markdown(html)
-        self.live_editor.setPlainText(md)
-        self._render_live_preview()
-        self.append_log(f"🔄 HTML → Markdown: {os.path.basename(path)}")
-
-    # ─── Watermark Designer ───
-
-    def show_watermark_designer(self):
-        from src.gui.watermark_designer import WatermarkDesignerDialog
-        dlg = WatermarkDesignerDialog(self, self.current_lang)
-        if dlg.exec():
-            self.footer_input.setText(f"[WATERMARK:{self.footer_input.text()}]")
-            self.append_log("🎨 Watermark applied")
-
-    # ─── Flashcards ───
-
-    def generate_flashcards(self):
-        text = self.live_editor.toPlainText()
-        cards = extract_flashcards(text)
-        if not cards:
-            QMessageBox.information(self, "Flashcards", "No flashcards found (need headings with content)")
-            return
-
-        from src.core.flashcards import cards_to_html, cards_to_markdown
-
-        dlg = QDialog(self)
-        dlg.setWindowTitle(f"🃏 Flashcards ({len(cards)} cards)")
-        dlg.setMinimumSize(700, 500)
-        layout = QVBoxLayout(dlg)
-
-        browser = QTextBrowser()
-        browser.setOpenExternalLinks(True)
-        browser.setHtml(cards_to_html(cards))
-        layout.addWidget(browser)
-
-        btn_row = QHBoxLayout()
-        btn_export_md = QPushButton("📝 Export as Markdown")
-        btn_export_md.clicked.connect(lambda: self._export_flashcards_md(cards))
-        btn_row.addWidget(btn_export_md)
-        btn_export_html = QPushButton("🌐 Export as HTML")
-        btn_export_html.clicked.connect(lambda: self._export_flashcards_html(cards))
-        btn_row.addWidget(btn_export_html)
-        btn_close = QPushButton("Close")
-        btn_close.clicked.connect(dlg.close)
-        btn_row.addWidget(btn_close)
-        layout.addLayout(btn_row)
-        dlg.exec()
-
-    def _export_flashcards_md(self, cards):
-        from src.core.flashcards import cards_to_markdown
-        path, _ = QFileDialog.getSaveFileName(self, "Export Flashcards", "", "Markdown (*.md)")
-        if path:
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(cards_to_markdown(cards))
-
-    def _export_flashcards_html(self, cards):
-        from src.core.flashcards import cards_to_html
-        path, _ = QFileDialog.getSaveFileName(self, "Export Flashcards", "", "HTML (*.html)")
-        if path:
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(cards_to_html(cards))
-
-    # ─── Citation Manager ───
-
-    def show_citation_manager(self):
-        from src.gui.dialogs import CitationManagerDialog
-        dlg = CitationManagerDialog(self, self.current_lang)
-        dlg.exec()
-
-    # ─── Glossary Builder ───
-
-    def build_glossary(self):
-        text = self.live_editor.toPlainText()
-        defs = extract_definitions(text)
-        if not defs:
-            QMessageBox.information(self, "Glossary", "No definitions found (use **Term**: definition)")
-            return
-
-        from src.core.glossary import glossary_to_html
-        html = glossary_to_html(defs)
-
-        dlg = QDialog(self)
-        dlg.setWindowTitle(f"📖 Glossary ({len(defs)} terms)")
-        dlg.setMinimumSize(600, 400)
-        layout = QVBoxLayout(dlg)
-        browser = QTextBrowser()
-        browser.setOpenExternalLinks(True)
-        browser.setHtml(html)
-        layout.addWidget(browser)
-        btn = QPushButton("Close")
-        btn.clicked.connect(dlg.close)
-        layout.addWidget(btn)
-        dlg.exec()
-
-    # ─── Quiz Generator ───
-
-    def generate_quiz(self):
-        text = self.live_editor.toPlainText()
-        quiz = generate_quiz_from_text(text)
-        if not quiz["questions"]:
-            QMessageBox.information(self, "Quiz", "Not enough content to generate quiz")
-            return
-
-        from src.core.quiz_generator import quiz_to_html
-        html = quiz_to_html(quiz)
-
-        dlg = QDialog(self)
-        dlg.setWindowTitle(f"📝 Quiz ({quiz['total']} questions)")
-        dlg.setMinimumSize(700, 500)
-        layout = QVBoxLayout(dlg)
-        browser = QTextBrowser()
-        browser.setOpenExternalLinks(True)
-        browser.setHtml(html)
-        layout.addWidget(browser)
-        btn = QPushButton("Close")
-        btn.clicked.connect(dlg.close)
-        layout.addWidget(btn)
-        dlg.exec(    )
-
-
-def _get_options(window) -> ConversionOptions:
-    return ConversionOptions(
-        doc_theme=window.doc_theme_combo.currentData(),
-        code_theme=window.code_theme_combo.currentData(),
-        paper_size=window.paper_combo.currentText(),
-        watermark=window.watermark_input.text().strip(),
-        footer_text=window.footer_input.text().strip(),
-        custom_css=window.custom_css_input.text().strip(),
-        export_format=window.format_combo.currentData(),
-        pdf_password=window.pdf_password_input.text().strip(),
-        margins=window.margins_input.text().strip(),
-        docx_template=window.docx_template_input.text().strip(),
-        page_numbers=window.chk_page_numbers.isChecked(),
-        page_num_format=window.combo_page_format.currentData() or "simple",
-        is_presentation=window.chk_presentation_mode.isChecked(),
-        compress=window.chk_compress.isChecked(),
-    )

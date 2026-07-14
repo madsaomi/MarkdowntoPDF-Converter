@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "markdown-to-pdf-converter"
+version = "1.0.0"
+description = "Desktop application for converting Markdown to PDF, DOCX, HTML, EPUB, PPTX, PNG, JPG with live preview editor"
+requires-python = ">=3.10"
+dependencies = [
+    "markdown>=3.5",
+    "pymdown-extensions>=10.7",
+    "jinja2>=3.1",
+    "pygments>=2.17",
+    "pypdf>=4.0",
+]
+
+[project.optional-dependencies]
+gui = ["PyQt6>=6.5.0"]
+pdf = ["weasyprint>=61.2"]
+docx = ["python-docx>=1.1", "htmldocx>=0.0.6"]
+epub = ["ebooklib>=0.18"]
+pptx = ["python-pptx>=1.0"]
+images = ["PyMuPDF>=1.23", "Pillow>=10.0"]
+tts = ["pyttsx3>=2.90"]
+ocr = ["pytesseract>=0.3"]
+build = ["pyinstaller>=6.0"]
+all = [
+    "PyQt6>=6.5.0", "weasyprint>=61.2",
+    "python-docx>=1.1", "htmldocx>=0.0.6",
+    "ebooklib>=0.18", "python-pptx>=1.0",
+    "PyMuPDF>=1.23", "Pillow>=10.0",
+    "pyttsx3>=2.90", "pytesseract>=0.3",
+    "pyinstaller>=6.0",
+]
+test = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

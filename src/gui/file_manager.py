@@ -2,13 +2,13 @@
 
 import os
 import logging
-from PyQt6.QtWidgets import QFileDialog, QMessageBox, QListWidgetItem
+from PyQt6.QtWidgets import QFileDialog, QMessageBox, QListWidgetItem, QWidget
 from PyQt6.QtCore import Qt
 
 logger = logging.getLogger("MarkdownToPDF.file_manager")
 
 
-def select_custom_css(window):
+def select_custom_css(window: QWidget):
     filepath, _ = QFileDialog.getOpenFileName(
         window, "Выберите CSS файл", "", "CSS Files (*.css);;All Files (*)"
     )
@@ -16,7 +16,7 @@ def select_custom_css(window):
         window.custom_css_input.setText(filepath)
 
 
-def select_docx_template(window):
+def select_docx_template(window: QWidget):
     filepath, _ = QFileDialog.getOpenFileName(
         window, "Выберите шаблон DOCX", "", "Word Documents (*.docx);;All Files (*)"
     )
@@ -24,7 +24,7 @@ def select_docx_template(window):
         window.docx_template_input.setText(filepath)
 
 
-def select_files(window):
+def select_files(window: QWidget):
     files, _ = QFileDialog.getOpenFileNames(
         window, "Выберите Markdown файлы", "",
         "Markdown Files (*.md);;All Files (*)"
@@ -45,7 +45,7 @@ def select_files(window):
         window.update_preview(files[0])
 
 
-def select_folder(window):
+def select_folder(window: QWidget):
     folder = QFileDialog.getExistingDirectory(window, "Выберите папку с .md файлами")
     if folder:
         md_files = [
@@ -69,7 +69,7 @@ def select_folder(window):
         window.update_preview(md_files[0])
 
 
-def add_to_recent(window, filepath: str):
+def add_to_recent(window: QWidget, filepath: str):
     recent = window.settings.value("recent_files", [], list)
     if filepath in recent:
         recent.remove(filepath)
@@ -79,7 +79,7 @@ def add_to_recent(window, filepath: str):
     update_recent_menu(window)
 
 
-def update_recent_menu(window):
+def update_recent_menu(window: QWidget):
     window.recent_menu.clear()
     recent = window.settings.value("recent_files", [], list)
     if not recent:
@@ -92,7 +92,7 @@ def update_recent_menu(window):
         act.triggered.connect(lambda checked, p=filepath: open_recent(window, p))
 
 
-def open_recent(window, filepath: str):
+def open_recent(window: QWidget, filepath: str):
     if not os.path.exists(filepath):
         QMessageBox.warning(window, window.tr_msg("msg_file_not_found"), window.tr_msg("msg_file_moved", filepath))
         return
@@ -108,7 +108,7 @@ def open_recent(window, filepath: str):
     window.update_preview(filepath)
 
 
-def open_output_folder(window):
+def open_output_folder(window: QWidget):
     out_dir = window.last_output_dir
     if not out_dir:
         if window.selected_files:
@@ -125,7 +125,7 @@ def open_output_folder(window):
         QMessageBox.warning(window, window.tr_msg("msg_file_not_found"), f"Folder not found:\n{out_dir}")
 
 
-def update_workspace_explorer(window):
+def update_workspace_explorer(window: QWidget):
     if not window.active_workspace_folder or not os.path.exists(window.active_workspace_folder):
         window.explorer_group.hide()
         return
@@ -174,7 +174,7 @@ def update_workspace_explorer(window):
     window.explorer_list.blockSignals(False)
 
 
-def load_workspace_file(window, item):
+def load_workspace_file(window: QWidget, item):
     file_path = item.data(Qt.ItemDataRole.UserRole)
     if not file_path or not os.path.exists(file_path):
         return
@@ -204,7 +204,7 @@ def load_workspace_file(window, item):
         logger.error("Failed to load workspace file %s: %s", file_path, e)
 
 
-def save_current_workspace_file(window):
+def save_current_workspace_file(window: QWidget):
     if window.current_workspace_file and os.path.exists(window.current_workspace_file):
         try:
             content = window.live_editor.toPlainText()
@@ -216,7 +216,7 @@ def save_current_workspace_file(window):
             logger.error("Failed to save workspace file: %s", e)
 
 
-def filter_workspace_explorer(window, text):
+def filter_workspace_explorer(window: QWidget, text):
     query = text.lower().strip()
     for row in range(window.explorer_list.count()):
         item = window.explorer_list.item(row)

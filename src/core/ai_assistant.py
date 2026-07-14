@@ -25,7 +25,6 @@ class AIWritingAssistant:
         "ru": [
             (r"(\w+)\s+тоже\s+(\w+)", "Используйте «также» вместо «тоже» в формальном тексте"),
             (r"очень\s+очень", "Избегайте повторений «очень»"),
-            (r"(\w+)\s+не\s+(\w+)", "Проверьте управление глагола (раздельное/слитное написание «не»)"),
         ],
         "en": [
             (r"\bi\b", "Используйте заглавную букву «I» вместо строчной"),
@@ -35,26 +34,19 @@ class AIWritingAssistant:
         ],
     }
 
-    # Style improvements
+    # Style improvements: (pattern, replacement, explanation)
     STYLE_RULES = {
         "ru": [
-            (r"в\s+настоящее\s+время", "Сократите до «сейчас» или «ныне»"),
-            (r"для\s+того\s+чтобы", "Сократите до «чтобы»"),
-            (r"является\s+являющимся", "Уберите тавтологию"),
+            (r"в\s+настоящее\s+время", "сейчас", "Сократите до «сейчас» или «ныне»"),
+            (r"для\s+того\s+чтобы", "чтобы", "Сократите до «чтобы»"),
         ],
         "en": [
-            (r"in\s+order\s+to", "Сократите до «to»"),
-            (r"due\s+to\s+the\s+fact\s+that", "Сократите до «because»"),
-            (r"at\s+the\s+present\s+time", "Сократите до «now»"),
-            (r"has\s+the\s+ability\s+to", "Сократите до «can»"),
+            (r"in\s+order\s+to", "to", "Сократите до «to»"),
+            (r"due\s+to\s+the\s+fact\s+that", "because", "Сократите до «because»"),
+            (r"at\s+the\s+present\s+time", "now", "Сократите до «now»"),
+            (r"has\s+the\s+ability\s+to", "can", "Сократите до «can»"),
         ],
     }
-
-    # Readability improvements
-    READABILITY_RULES = [
-        (r"句子超过30个单词", "Разбейте длинные предложения на более короткие"),
-        (r"[^!?.]{200,}", "Разбейте длинный абзац (более 200 символов без знаков препинания)"),
-    ]
 
     def analyze(self, text: str, lang: str = "ru") -> list[AISuggestion]:
         """Analyze text and return suggestions."""
@@ -89,7 +81,7 @@ class AIWritingAssistant:
     def _check_style(self, text: str, lang: str, line: int) -> list[AISuggestion]:
         results = []
         rules = self.STYLE_RULES.get(lang, []) + self.STYLE_RULES.get("en", [])
-        for pattern, explanation in rules:
+        for pattern, _replacement, explanation in rules:
             for match in re.finditer(pattern, text, re.IGNORECASE):
                 results.append(AISuggestion(
                     category="style",
@@ -129,15 +121,15 @@ class AIWritingAssistant:
         """Auto-improve text based on suggestions."""
         improved = text
 
-        for pattern, _ in self.STYLE_RULES.get(lang, []):
-            improved = re.sub(pattern, lambda m: m.group(), improved, flags=re.IGNORECASE)
+        for pattern, replacement, _ in self.STYLE_RULES.get(lang, []):
+            improved = re.sub(pattern, replacement, improved, flags=re.IGNORECASE)
 
         return improved
 
     def generate_outline(self, text: str, lang: str = "ru") -> str:
         """Generate an outline from existing text."""
         lines = text.split("\n")
-        headings = []
+        headings: list[tuple[int, str]] = []
         content_map = {}
 
         current_heading = None
@@ -147,8 +139,9 @@ class AIWritingAssistant:
             if line.startswith("#"):
                 if current_heading:
                     content_map[current_heading] = " ".join(current_content)[:100]
+                level = len(line) - len(line.lstrip("#"))
                 current_heading = line.strip("# ").strip()
-                headings.append(current_heading)
+                headings.append((level, current_heading))
                 current_content = []
             else:
                 if line.strip():
@@ -158,11 +151,11 @@ class AIWritingAssistant:
             content_map[current_heading] = " ".join(current_content)[:100]
 
         if not headings:
-            return "## Оглавление\n\n" + "\n".join(f"- {h}" for h in headings)
+            return ""
 
         outline_parts = ["## Оглавление\n"]
-        for i, h in enumerate(headings, 1):
-            prefix = "  " * (i - 1)
+        for i, (level, h) in enumerate(headings, 1):
+            prefix = "  " * (level - 1)
             outline_parts.append(f"{prefix}{i}. {h}")
 
         return "\n".join(outline_parts)
