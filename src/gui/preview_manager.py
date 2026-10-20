@@ -4,6 +4,8 @@ import os
 import logging
 from PyQt6.QtWidgets import QApplication, QWidget
 
+from src.core.html_builder import build_html_for_preview_and_export
+
 logger = logging.getLogger("MarkdownToPDF.preview_manager")
 
 
@@ -92,7 +94,26 @@ def render_live_preview(window: QWidget):
             </style></head><body>{html}</body></html>
             """
         else:
-            if getattr(window, 'is_dark', False):
+            # Единый рендер-путь с экспортом (Jinja2 base.html) для визуального
+            # соответствия превью и PDF/HTML. Fallback — прежний inline-CSS.
+            preview_html = None
+            try:
+                metadata = {
+                    "title": getattr(window, "current_document_title", "") or "Preview",
+                    "author": "", "date": "",
+                }
+                built = build_html_for_preview_and_export(
+                    html, metadata=metadata,
+                    doc_theme=getattr(window, "current_doc_theme", "theme_modern.css"),
+                    code_theme=getattr(window, "current_code_theme", "pygments.css"),
+                    lang=getattr(window, "current_lang", "ru"),
+                )
+                if built and "<html" in built.lower():
+                    preview_html = built
+            except Exception as e:
+                logger.debug("Shared html builder unavailable for preview: %s", e)
+
+            if preview_html is None and getattr(window, 'is_dark', False):
                 preview_html = f"""
                 <html><head><style>
                 body {{ font-family: 'Segoe UI', sans-serif; color: #e2e8f0; background: rgba(30, 41, 59, 0.95);
