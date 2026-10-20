@@ -3,7 +3,8 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
 ![PyQt6](https://img.shields.io/badge/GUI-PyQt6-green.svg)
 ![WeasyPrint](https://img.shields.io/badge/PDF_Engine-WeasyPrint-red.svg)
-![Tests](https://github.com/user/markdown-to-pdf-converter/actions/workflows/test.yml/badge.svg)
+![Tests](https://github.com/madsaomi/MarkdowntoPDF-Converter/actions/workflows/test.yml/badge.svg)
+![Release](https://github.com/madsaomi/MarkdowntoPDF-Converter/actions/workflows/release.yml/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 Desktop application for converting Markdown to PDF, DOCX, HTML, EPUB, PPTX, PNG, JPG with live preview.
@@ -97,21 +98,22 @@ Full CLI arguments: `python main.py --help`
 
 ```
 src/
-├── core/                          # Business logic
-│   ├── config.py                  # Paths, cache, app data
+├── config.py                      # Paths, cache, app data, PDF-engine resolver
+├── core/                          # Business logic (28 modules)
 │   ├── parser.py                  # MD→HTML with XSS/SSRF sanitization
-│   ├── renderer.py                # PDF via WeasyPrint subprocess
+│   ├── renderer.py                # PDF via WeasyPrint subprocess (Jinja2 template)
 │   ├── docx_renderer.py           # DOCX export
 │   ├── epub_renderer.py           # EPUB export
 │   ├── pptx_renderer.py           # PPTX export
 │   ├── image_renderer.py          # PNG/JPG via WeasyPrint+PyMuPDF
 │   ├── reveal_exporter.py         # Reveal.js export
+│   ├── multi_export.py            # Batch export
 │   ├── pdf_encrypt.py             # PDF password encryption
 │   ├── pdf_to_markdown.py         # PDF text extraction
-│   ├── linter.py                  # 8 Markdown lint rules
-│   ├── tts_engine.py              # Text-to-speech (22 voices)
+│   ├── linter.py                  # Markdown lint rules
+│   ├── tts_engine.py              # Text-to-speech
 │   ├── ocr_engine.py              # OCR via Tesseract
-│   ├── ai_assistant.py            # Style/grammar checker
+│   ├── ai_assistant.py            # Local style/grammar checker
 │   ├── flashcards.py              # Flashcard extraction
 │   ├── citation_manager.py        # BibTeX citations
 │   ├── glossary.py                # Auto-glossary builder
@@ -122,15 +124,17 @@ src/
 │   ├── cloud_templates.py         # Remote template fetcher
 │   ├── github_sync.py             # Git operations
 │   ├── plugin_system.py           # Plugin loader
+│   ├── snippets.py                # Snippet library
+│   ├── translator.py              # Offline translator (stub)
 │   ├── template_vars.py           # {{variable}} substitution
-│   └── multi_export.py            # Batch export
-└── gui/                           # PyQt6 interface
-    ├── main_window.py             # (~1330 lines)
-    ├── window_tools.py            # Tool methods mixin (~746 lines)
-    ├── ui_layout.py               # Minimal UI layout (~496 lines)
-    ├── styles.py                  # Clean light/dark themes (~162 lines)
+│   └── ...
+└── gui/                           # PyQt6 interface (26 modules)
+    ├── main_window.py             # Main window
+    ├── window_tools.py            # Tool methods mixin
+    ├── ui_layout.py               # Minimal UI layout + menus
+    ├── styles.py                  # Clean light/dark themes
     ├── dialogs.py                 # All dialogs
-    ├── translations.py            # RU/EN (205 keys each)
+    ├── translations.py            # RU/EN
     ├── highlighter.py             # Syntax highlighting
     ├── models.py                  # Data models
     ├── threads.py                 # Background threads
@@ -139,17 +143,10 @@ src/
     ├── file_manager.py            # File operations
     ├── preview_manager.py         # Live preview
     ├── document_tools.py          # Document utilities
-    ├── templates_data.py          # Built-in templates
     └── ...                        # Other GUI modules
-tests/                             # 77 tests (pytest)
-├── test_parser.py                 # 14 parser tests
-├── test_linter.py                 # 8 linter tests
-├── test_translations.py           # 5 translation tests
-├── test_core.py                   # 11 core module tests
-├── test_ai_assistant.py           # 14 AI tests
-├── test_wikilinks.py              # 8 wikilinks tests
-├── test_template_vars.py          # 10 template var tests
-└── run_all.py                     # Test runner
+tests/                             # 22 test files (custom runner + pytest)
+scripts/
+└── build_release.ps1              # Local release build (.exe + installer)
 ```
 
 ## PDF Engine (WeasyPrint)
@@ -167,19 +164,38 @@ powershell -ExecutionPolicy Bypass -File setup_pdf_engine.ps1
 
 ## Build
 
+Локальная сборка релиза (PyInstaller `.exe` + опционально инсталлятор Inno Setup):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/build_release.ps1
+```
+
+Или напрямую через PyInstaller:
+
 ```bash
 python build.py                          # PyInstaller .exe (requires weasyprint.exe, see above)
 python build.py --console                # with console for debugging
 python build.py --skip-pdf-engine        # build WITHOUT PDF support
 ```
 
-`build.py` stops with a clear error if `weasyprint-windows/dist/weasyprint.exe` is missing, because a frozen build cannot use the pip fallback.
+`build.py` останавливается с понятной ошибкой, если `weasyprint-windows/dist/weasyprint.exe` отсутствует, потому что frozen-сборка не может использовать pip-fallback.
+
+### Release
+
+Релиз публикуется автоматически по тегу `v*`:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Workflow [`.github/workflows/release.yml`](.github/workflows/release.yml) сначала прогоняет тесты, затем собирает `.exe` и инсталлятор и прикрепляет их к GitHub Release. Без портативного `weasyprint.exe` в репозитории сборка идёт с `--skip-pdf-engine` (PDF-экспорт в `.exe` недоступен — см. раздел «PDF Engine»).
 
 ## Tests
 
 ```bash
-python -m pytest tests/ -q       # pytest (69 tests)
-python tests/run_all.py           # custom runner
+python tests/run_all.py           # custom runner (22 test files)
+python -m pytest tests/ -q        # pytest
 ```
 
 ## Requirements

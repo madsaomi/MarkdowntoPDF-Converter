@@ -32,6 +32,7 @@ test_files = [
     "test_dependency_sync.py",
     "test_core_fixes_007.py",
     "test_stub_wiring_008.py",
+    "test_release_config.py",
 ]
 
 passed = 0
