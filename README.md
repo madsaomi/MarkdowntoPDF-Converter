@@ -152,15 +152,28 @@ tests/                             # 77 tests (pytest)
 └── run_all.py                     # Test runner
 ```
 
+## PDF Engine (WeasyPrint)
+
+PDF/PNG/JPG export needs the WeasyPrint engine. Resolution order:
+
+1. **Portable `weasyprint.exe`** in `weasyprint-windows/dist/` (priority; the only option for frozen `.exe` builds).
+2. **pip package** `weasyprint` (`python -m weasyprint`) — for development on a clean clone; on Windows also requires GTK3 ([install guide](https://doc.courtbouillon.org/weasyprint/stable/first_install.html)).
+
+Run the built-in diagnostics/setup script:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File setup_pdf_engine.ps1
+```
+
 ## Build
 
 ```bash
-python build.py                          # PyInstaller .exe
-# or with console for debugging:
-python build.py --console
+python build.py                          # PyInstaller .exe (requires weasyprint.exe, see above)
+python build.py --console                # with console for debugging
+python build.py --skip-pdf-engine        # build WITHOUT PDF support
 ```
 
-Requires `weasyprint.exe` in `weasyprint-windows/dist/`.
+`build.py` stops with a clear error if `weasyprint-windows/dist/weasyprint.exe` is missing, because a frozen build cannot use the pip fallback.
 
 ## Tests
 

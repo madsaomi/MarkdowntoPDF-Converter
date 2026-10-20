@@ -22,7 +22,7 @@ def update_installer_version(version):
     print(f"Updated installer.iss version to {version}")
 
 
-def build_executable(windowed=True):
+def build_executable(windowed=True, skip_pdf_engine=False):
     # Define paths
     src_dir = os.path.dirname(os.path.abspath(__file__))
     main_script = os.path.join(src_dir, 'main.py')
@@ -39,9 +39,21 @@ def build_executable(windowed=True):
     # In Windows, the separator for --add-data is ';' (in Linux it is ':')
     sep = ';' if os.name == 'nt' else ':'
     add_data_templates = f'{templates_dir}{sep}templates'
-    # WeasyPrint engine directory
+    # WeasyPrint engine directory (optional — PDF engine must be present for a frozen build)
     weasyprint_dir = os.path.join(src_dir, 'weasyprint-windows', 'dist')
+    weasyprint_exe = os.path.join(weasyprint_dir, 'weasyprint.exe')
     add_data_weasyprint = f'{weasyprint_dir}{sep}weasyprint-windows/dist'
+    if not os.path.isfile(weasyprint_exe) and not skip_pdf_engine:
+        print("\n" + "=" * 70)
+        print("ERROR: PDF engine not found!")
+        print(f"  Expected: {weasyprint_exe}")
+        print("  A frozen (PyInstaller) build cannot use the pip fallback —")
+        print("  it MUST bundle the portable weasyprint.exe.")
+        print("  Download/place it there first, or pass --skip-pdf-engine")
+        print("  to build WITHOUT PDF support.\n")
+        print("  See README.md section 'Build' for details.")
+        print("=" * 70 + "\n")
+        sys.exit(1)
     # Assets (icon)
     assets_dir = os.path.join(src_dir, 'assets')
     add_data_assets = f'{assets_dir}{sep}assets'
@@ -60,7 +72,6 @@ def build_executable(windowed=True):
         '--clean',
         f'--icon={icon_path}',
         f'--add-data={add_data_templates}',
-        f'--add-data={add_data_weasyprint}',
         f'--add-data={add_data_assets}',
         '--collect-all=pymdownx',
         '--hidden-import=PyQt6.QtWidgets',
@@ -128,6 +139,9 @@ def build_executable(windowed=True):
         '--hidden-import=speech_recognition',
     ]
 
+    if not skip_pdf_engine:
+        args.append(f'--add-data={add_data_weasyprint}')
+
     PyInstaller.__main__.run(args)
 
     print(f"Build complete! v{__version__} executable is in the 'dist' folder.")
@@ -138,9 +152,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build MarkdownToPDF standalone executable")
     parser.add_argument('--console', action='store_true', help='Build with console (for CLI debugging)')
     parser.add_argument('--debug', action='store_true', help='Build with debug mode')
+    parser.add_argument('--skip-pdf-engine', action='store_true',
+                        help='Build without bundling weasyprint.exe (PDF export will NOT work in the built app)')
     parsed = parser.parse_args()
 
-    build_executable(windowed=not parsed.console)
+    build_executable(windowed=not parsed.console, skip_pdf_engine=parsed.skip_pdf_engine)
 
     if parsed.debug:
         print("\nNote: --debug flag passed. Consider adding '--debug' PyInstaller flag for more verbose output.")

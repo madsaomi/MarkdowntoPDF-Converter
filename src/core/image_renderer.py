@@ -29,9 +29,8 @@ class ImageRenderer:
             paper_size=paper_size, lang=lang
         )
 
-        wp_exe = self.wp_executable
-        if not wp_exe or not os.path.exists(wp_exe):
-            raise FileNotFoundError(f"Не найден движок WeasyPrint по пути: {wp_exe}")
+        # Resolve WeasyPrint engine: portable exe -> pip package -> FileNotFoundError
+        wp_cmd = AppConfig.resolve_weasyprint_cmd(self.wp_executable or None)
 
         # Render HTML to PDF via WeasyPrint CLI
         temp_err_path = None
@@ -47,7 +46,7 @@ class ImageRenderer:
             fd_err, temp_err_path = tempfile.mkstemp(suffix='.log', text=True)
             with os.fdopen(fd_err, 'w+', encoding='utf-8') as stderr_file:
                 process = subprocess.Popen(
-                    [wp_exe, temp_html_path, temp_pdf_path, '--encoding', 'utf-8'],
+                    wp_cmd + [temp_html_path, temp_pdf_path, '--encoding', 'utf-8'],
                     stdout=subprocess.DEVNULL, stderr=stderr_file, text=True
                 )
 

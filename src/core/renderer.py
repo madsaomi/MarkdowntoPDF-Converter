@@ -6,6 +6,8 @@ import tempfile
 import subprocess
 from jinja2 import Environment, FileSystemLoader
 
+from src.config import AppConfig
+
 logger = logging.getLogger("MarkdownToPDF.renderer")
 
 
@@ -113,10 +115,11 @@ class PDFRenderer:
         else:
             base_url = "file:///" + quote(os.path.abspath(self.template_dir).replace(os.sep, '/'), safe='/:') + "/"
 
-        # Resolve WeasyPrint executable path
-        wp_exe = self.wp_executable
-        if not wp_exe or not os.path.exists(wp_exe):
-            raise FileNotFoundError(f"Не найден движок WeasyPrint по пути: {wp_exe}")
+        # Resolve WeasyPrint engine: portable exe -> pip package -> FileNotFoundError
+        if isinstance(self.wp_executable, list):
+            wp_cmd = self.wp_executable
+        else:
+            wp_cmd = AppConfig.resolve_weasyprint_cmd(self.wp_executable or None)
 
         # Write rendered HTML to a temporary file
         fd, temp_html_path = tempfile.mkstemp(suffix='.html', text=True)
@@ -132,13 +135,14 @@ class PDFRenderer:
             output_dir = os.path.dirname(os.path.abspath(output_path))
             os.makedirs(output_dir, exist_ok=True)
             with os.fdopen(fd_err, 'w+', encoding='utf-8') as stderr_file:
-                process = subprocess.Popen([
-                    wp_exe,
-                    temp_html_path,
-                    temp_pdf_path,
-                    '--base-url', base_url,
-                    '--encoding', 'utf-8'
-                ], stdout=subprocess.DEVNULL, stderr=stderr_file, text=True)
+                process = subprocess.Popen(
+                    wp_cmd + [
+                        temp_html_path,
+                        temp_pdf_path,
+                        '--base-url', base_url,
+                        '--encoding', 'utf-8'
+                    ],
+                    stdout=subprocess.DEVNULL, stderr=stderr_file, text=True)
     
                 start_time = time.time()
                 while process.poll() is None:

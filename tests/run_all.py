@@ -19,6 +19,7 @@ test_files = [
     "test_wikilinks.py",
     "test_template_vars.py",
     "test_pptx_parser.py",
+    "test_weasyprint_resolver.py",
 ]
 
 passed = 0
