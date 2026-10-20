@@ -34,6 +34,8 @@ class ImageRenderer:
             raise FileNotFoundError(f"Не найден движок WeasyPrint по пути: {wp_exe}")
 
         # Render HTML to PDF via WeasyPrint CLI
+        temp_err_path = None
+        temp_pdf_path = None
         fd_html, temp_html_path = tempfile.mkstemp(suffix='.html', text=True)
         try:
             with os.fdopen(fd_html, 'w', encoding='utf-8') as f:
@@ -110,7 +112,13 @@ class ImageRenderer:
                 os.unlink(temp_html_path)
             except OSError:
                 pass
-            try:
-                os.unlink(temp_pdf_path)
-            except OSError:
-                pass
+            if temp_pdf_path:
+                try:
+                    os.unlink(temp_pdf_path)
+                except OSError:
+                    pass
+            if temp_err_path:
+                try:
+                    os.unlink(temp_err_path)
+                except OSError:
+                    pass

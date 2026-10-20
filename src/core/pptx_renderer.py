@@ -74,6 +74,9 @@ class _SlideParser(HTMLParser):
         if self._current_content:
             joined = ' '.join(self._current_content).strip()
             if joined:
+                if not self.slides:
+                    # Контент появился до первого заголовка — создаём вводный слайд
+                    self.slides.append({'title': '', 'content': []})
                 self.slides[-1]['content'] = [joined]
             self._current_content = []
 

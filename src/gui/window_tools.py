@@ -2,7 +2,8 @@ import os
 import logging
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QFileDialog, QMessageBox, QComboBox, QSlider, QTextBrowser
+    QFileDialog, QMessageBox, QComboBox, QSlider, QTextBrowser,
+    QInputDialog
 )
 from PyQt6.QtCore import Qt
 
@@ -28,8 +29,9 @@ class ToolMethodsMixin:
         dlg.exec()
 
     def show_conversion_history(self):
-        from src.gui.document_tools import show_conversion_history
-        show_conversion_history(self)
+        # Журнал экспорта отображается на вкладке «History» (создаётся в ui_layout.py)
+        self.update_export_history_ui()
+        self.tabs.setCurrentWidget(self.history_container)
 
     def show_diff_dialog(self):
         from src.gui.dialogs import DiffDialog

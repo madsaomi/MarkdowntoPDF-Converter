@@ -18,6 +18,7 @@ test_files = [
     "test_ai_assistant.py",
     "test_wikilinks.py",
     "test_template_vars.py",
+    "test_pptx_parser.py",
 ]
 
 passed = 0

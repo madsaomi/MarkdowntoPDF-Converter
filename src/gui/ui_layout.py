@@ -359,6 +359,13 @@ def setup_ui(window):
     log_layout.addWidget(window.log_output)
     window.tabs.addTab(log_container, "Log")
 
+    # ── Export History (tab next to Log; filled by update_export_history_ui) ──
+    window.history_container = QWidget()
+    window.history_layout = QVBoxLayout(window.history_container)
+    window.history_layout.setContentsMargins(0, 0, 0, 0)
+    window.history_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+    window.tabs.addTab(window.history_container, "History")
+
     content_layout.addWidget(window.tabs)
 
     # ── Workspace Explorer (hidden by default) ──
