@@ -1,28 +1,34 @@
-# 📋 Активная задача: TASK-006 — Синхронизация зависимостей
+# 📋 Активная задача: IDLE (нет активной задачи)
 
-**Статус:** 🔵 IN_PROGRESS  
-**Дата создания:** 2026-10-20  
+**Статус:** ⚪ IDLE  
+**Дата обновления:** 2026-10-20  
 **Исполнитель:** Big Pickle (OpenCode)  
-**Приоритет:** LOW  
-**Связанный план:** [PLAN-006](file:///agents/plans/plan_006_dependency_sync.md)  
+**Последняя завершённая задача:** TASK-006 — Синхронизация зависимостей  
 
 ---
 
-## 🎯 Цель задачи
-Устранить дрейф между `requirements.txt` и `pyproject.toml`: выровнять версии, объявить используемый, но незадекларированный `SpeechRecognition`, добавить extra `speech`.
+## 🎯 Цель (следующий кандидат)
+
+Следующая задача из [`backlog.md`](file:///agents/tasks/backlog.md):
+- **TASK-007 (LOW):** мелкие баги ядра (дублирующийся лог «saved», шэдоуинг `QThread.finished`, busy-wait в TTS, `<html lang="en">`).
+- **TASK-008 (LOW):** судьба фичевых заглушек в `main_window.py`.
+
+> При взятии задачи: перенести её формулировку сюда, создать/обновить план в [`agents/plans/`](file:///agents/plans/) (Plan-First).
 
 ---
 
-## 📌 Пошаговый чек-лист выполнения:
+## ✅ Журнал закрытых задач
 
-- [ ] **Шаг 1:** `requirements.txt` — выровнять операторы версий, добавить `SpeechRecognition`.
-- [ ] **Шаг 2:** `pyproject.toml` — добавить `MarkupSafe`, extra `speech`, расширить `all`.
-- [ ] **Шаг 3:** `tests/test_dependency_sync.py` — сверка обоих файлов и покрытие используемых в коде библиотек.
-- [ ] **Шаг 4:** Верификация — регистрация в `run_all.py`, полный прогон.
+- ✅ **TASK-001 (критические баги)** — коммит `79ae4e5`. Отчёт: [`session_2026-10-20_01_big_pickle.md`](file:///agents/history/session_2026-10-20_01_big_pickle.md).
+- ✅ **TASK-002 (рендер PDF-движка)** — коммит `ffcbbe6`. Отчёт: [`session_2026-10-20_02_big_pickle.md`](file:///agents/history/session_2026-10-20_02_big_pickle.md).
+- ✅ **TASK-003 (чистка мёртвого кода GUI)** — коммит `1db3a81`. Отчёт: [`session_2026-10-20_03_big_pickle.md`](file:///agents/history/session_2026-10-20_03_big_pickle.md).
+- ✅ **TASK-004 (4 хрупкие UI-механики)** — коммит `451bfc9`. Отчёт: [`session_2026-10-20_04_big_pickle.md`](file:///agents/history/session_2026-10-20_04_big_pickle.md).
+- ✅ **TASK-005 (тестовое покрытие ядра)** — коммит `bb9426e`. Отчёт: [`session_2026-10-20_05_big_pickle.md`](file:///agents/history/session_2026-10-20_05_big_pickle.md). Попутно исправлен [BUG_002](file:///agents/bugs_and_fixes/BUG_002_reveal_js_slide_split.md).
+- ✅ **TASK-006 (синхронизация зависимостей)** — коммит `688f55f`. Отчёт: [`session_2026-10-20_06_big_pickle.md`](file:///agents/history/session_2026-10-20_06_big_pickle.md).
 
 ---
 
-## 🧪 Критерии готовности (Definition of Done):
-1. Множества зависимостей `requirements.txt` и `pyproject.toml` согласованы.
-2. `SpeechRecognition` объявлен в обоих файлах.
-3. `tests/run_all.py` — все файлы PASS (19/19).
+## 🧪 Состояние верификации
+
+- Тесты: **19/19** тестовых файлов зелёные (`python tests/run_all.py`).
+- Integrity-check «Второго Мозга»: 0 ошибок.

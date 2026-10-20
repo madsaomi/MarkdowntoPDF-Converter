@@ -1,6 +1,6 @@
 # 📐 План реализации: PLAN-006 — Синхронизация зависимостей
 
-> **Статус:** 🟢 APPROVED  
+> **Статус:** ✅ COMPLETED (2026-10-20, коммит `688f55f`)  
 > **Дата создания:** 2026-10-20  
 > **Автор / Агент:** Big Pickle (OpenCode)  
 > **Связанная задача:** [TASK-006](file:///agents/tasks/active_task.md)  
@@ -52,10 +52,10 @@
 
 ## 3. 📝 Пошаговый план реализации (Atomic Steps)
 
-- [ ] **Этап 1: requirements.txt** — привести операторы версий к диапазонам `pyproject` (кроме обоснованных пинов), добавить `SpeechRecognition`, сохранить `MarkupSafe`.
-- [ ] **Этап 2: pyproject.toml** — добавить `MarkupSafe`, extra `speech` (`SpeechRecognition` + `pyaudio`), расширить `all`.
-- [ ] **Этап 3: Тест синхронизации** — `tests/test_dependency_sync.py` (парсер обоих файлов, сверка множеств; проверка «используется в коде → объявлено»).
-- [ ] **Этап 4: Верификация** — регистрация в `run_all.py`, `py_compile`, полный прогон.
+- [x] **Этап 1: requirements.txt** — все жёсткие пины (`==`) заменены на диапазоны (`>=`), выровнены с `pyproject.toml`; добавлен `SpeechRecognition>=3.10`; сгруппированы по назначению с комментариями.
+- [x] **Этап 2: pyproject.toml** — добавлен `markupsafe>=2.1` в базовые зависимости, новый extra `speech` (`SpeechRecognition` + `pyaudio`), extra `all` расширен.
+- [x] **Этап 3: Тест синхронизации** — `tests/test_dependency_sync.py` (5 проверок: согласованность множеств, объявление `SpeechRecognition`, «используется в коде → объявлено» через AST, отсутствие `==`-пинов, парсинг pyproject с fallback для Python 3.10).
+- [x] **Этап 4: Верификация** — тест зарегистрирован в `run_all.py`; **19/19** файлов зелёные; проверено, что тест реально ловит дрейф (удаление `SpeechRecognition` → AssertionError).
 
 ---
 
@@ -69,6 +69,6 @@
 1. Автоматические тесты: `python tests/test_dependency_sync.py` + `python tests/run_all.py`.
 2. Ручная проверка: `python -m py_compile` обоих файлов невозможен (не .py) — вместо этого парсинг TOML/pip в тесте.
 3. Definition of Done:
-   - [ ] Все зависимости из `[project.dependencies]` присутствуют в `requirements.txt` и наоборот.
-   - [ ] `SpeechRecognition` объявлен в обоих файлах.
-   - [ ] Тест синхронизации зелёный, старая батарея не сломана.
+   - [x] Все зависимости из `[project.dependencies]` присутствуют в `requirements.txt` (и наоборот; исключение — dev/платформенные `pytest`/`pyaudio`).
+   - [x] `SpeechRecognition` объявлен в обоих файлах.
+   - [x] Тест синхронизации зелёный, старая батарея не сломана (19/19).
