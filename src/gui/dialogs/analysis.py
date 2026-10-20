@@ -45,6 +45,7 @@ class ReadabilityDashboardDialog(QDialog):
         unique_words = len(set(w.lower().strip(",.!?()") for w in words if w.strip()))
         avg_sentence = round(total_words / total_sentences, 1)
         
+        from src.gui.document_tools import estimate_readability
         score, level = estimate_readability(text, lang)
 
         stats_layout.addRow(t('stats_words').format(""), QLabel(str(total_words)))
