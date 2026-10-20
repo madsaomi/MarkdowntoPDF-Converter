@@ -88,16 +88,18 @@ class MarkdownParser:
         import re
         import zlib
         import base64
+        from src.core.render_cache import get_cached, set_cached
         
         engine_map = {
             'plantuml': 'plantuml',
             'graphviz': 'graphviz',
             'dot': 'graphviz',
             'ditaa': 'ditaa',
-            'c4': 'c4plantuml'
+            'c4': 'c4plantuml',
+            'mermaid': 'mermaid',
         }
         
-        pattern = re.compile(r'```(plantuml|graphviz|dot|ditaa|c4)\s*\n(.*?)\n```', re.DOTALL | re.IGNORECASE)
+        pattern = re.compile(r'```(plantuml|graphviz|dot|ditaa|c4|mermaid)\s*\n(.*?)\n```', re.DOTALL | re.IGNORECASE)
         
         def replace(match):
             tag = match.group(1).lower()
@@ -107,8 +109,17 @@ class MarkdownParser:
                 return ""
             try:
                 compressed = zlib.compress(code.encode('utf-8'), 9)
-                encoded = base64.urlsafe_b64encode(compressed).decode('utf-8')
-                url = f"https://kroki.io/{engine}/svg/{encoded}"
+                encoded = base64.urlsafe_b64encode(compressed).decode('utf-8').rstrip('=')
+                key = f"{engine}|{encoded}"
+                cached = get_cached('kroki_url', key)
+                if cached and cached.get('url'):
+                    url = cached['url']
+                else:
+                    url = f"https://kroki.io/{engine}/svg/{encoded}"
+                    try:
+                        set_cached('kroki_url', key, {'url': url})
+                    except Exception:
+                        pass
                 return f'<div class="diagram-{tag}" style="text-align: center; margin: 1.5em 0;"><img src="{url}" alt="{tag} Diagram" style="max-width: 100%; height: auto;"></div>'
             except Exception:
                 return match.group(0)

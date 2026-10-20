@@ -1,15 +1,28 @@
 import re
 import urllib.parse
 
+from src.core.render_cache import get_cached, set_cached
+
 LATEX_SERVICE = "https://latex.codecogs.com/png.latex?"
 
 
 def latex_to_url(latex: str, inline: bool = True) -> str:
     """Convert LaTeX formula to codecogs URL for rendering."""
+    cache_key = f"{inline}|{latex}"
+    cached = get_cached("latex_url", cache_key)
+    if cached and cached.get("url"):
+        return cached["url"]
     if inline:
-        latex = f"\\colorbox{{white}}{{$ {latex} $}}"
-    encoded = urllib.parse.quote(latex)
-    return f"{LATEX_SERVICE}{encoded}"
+        latex_fmt = f"\\colorbox{{white}}{{$ {latex} $}}"
+    else:
+        latex_fmt = latex
+    encoded = urllib.parse.quote(latex_fmt)
+    url = f"{LATEX_SERVICE}{encoded}"
+    try:
+        set_cached("latex_url", cache_key, {"url": url})
+    except Exception:
+        pass
+    return url
 
 
 def find_latex_expressions(text: str) -> list[tuple[int, int, str]]:
