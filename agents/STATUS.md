@@ -26,13 +26,13 @@
 ---
 
 ## 🎯 Что делается прямо сейчас (Текущий фокус):
-- ✅ **TASK-002** — PDF-движок: резолвер с pip-fallback внедрён (2026-10-20, коммит `ffcbbe6`, план: [`plan_002_weasyprint_engine_resolver.md`](file:///agents/plans/plan_002_weasyprint_engine_resolver.md))
-- Следующая кандидатура: **TASK-003** — чистка мёртвого кода GUI (см. [`backlog.md`](file:///agents/tasks/backlog.md))
+- ✅ **TASK-003** — чистка мёртвого кода GUI выполнена (2026-10-20, коммит `1db3a81`, план: [`plan_003_cleanup_dead_code.md`](file:///agents/plans/plan_003_cleanup_dead_code.md))
+- Следующая кандидатура: **TASK-004** — починка хрупких UI-механик (см. [`backlog.md`](file:///agents/tasks/backlog.md))
 
 ---
 
 ## 🚧 Блокеры и известные риски:
-- 🟡 **PDF-движок:** стратегия решена (exe → pip-fallback, TASK-002 ✅), но на локальной машине движок пока не установлен — запусти `setup_pdf_engine.ps1`. В frozen-сборке обязателен портативный `weasyprint.exe`.
+- 🟡 **PDF-движок локально недоступен:** стратегия решена (TASK-002 ✅), но pip-пакет `weasyprint` не устанавливается под **Python 3.15** (нет колёс `brotli`), а портативного `weasyprint.exe` нет. Решения: Python ≤3.14 рядом или положить exe в `weasyprint-windows/dist/`.
 - ⚠️ Внешние сетевые сервисы: LaTeX → CodeCogs, диаграммы → Kroki. Офлайн — битые картинки.
 - ⚠️ Декоративные фичи (AI-ассистент, переводчик, Plugin Marketplace, облачные шаблоны) — локальные заглушки без ML/сети.
 

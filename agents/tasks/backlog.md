@@ -20,13 +20,14 @@
 - [x] **TASK-002 (✅ 2026-10-20, коммит `ffcbbe6`):** Решение по PDF-движку: резолвер `AppConfig.resolve_weasyprint_cmd()` (exe → pip `weasyprint` → понятная ошибка), `build.py` не падает без движка (+`--skip-pdf-engine`), добавлен `setup_pdf_engine.ps1`. См. [`PLAN-002`](file:///agents/plans/plan_002_weasyprint_engine_resolver.md).
 
 ### 📌 Средний приоритет (Medium)
-- [ ] **TASK-003:** Чистка мёртвого и дублирующегося кода GUI: неиспользуемые импорты `main_window.py`, дубли методов MainWindow ↔ ToolMethodsMixin (6 пар), неиспользуемый `Translator`, неинстанцируемый `ModernSplashScreen`, закомментированные `CustomTitleBar`/`AmbientGlowWidget`.
+- [x] **TASK-003 (✅ 2026-10-20, коммит `1db3a81`):** Чистка мёртвого и дублирующегося кода GUI: удалены 19 неиспользуемых импортов, неиспользуемый `self.translator`, `EMOJI_MAP`, `preview_code_theme`, недостижимый дубль `set_writing_goal`, 6 затенённых дублей методов миксина в `window_tools.py`, дубль connect-панели поиска (−119 строк). Попутно опровергнут пункт аудита: `save_version` достижим из меню — сохранён. См. [PLAN-003](file:///agents/plans/plan_003_cleanup_dead_code.md).
 - [ ] **TASK-004:** Починка хрупких UI-механик: `toggle_split_view` (3 размера для сплиттера с 2 виджетами, `window_tools.py:247-255`), watermark-дизайнер отбрасывает результат (`window_tools.py:94-96`), меню Language не переводится (`main_window.py:803-807`), `closeEvent` не останавливает потоки и таймеры.
 - [ ] **TASK-005:** Расширение тестового покрытия: не покрыто ничего из рендереров (PDF/DOCX/EPUB/PPTX/Image), TTS/OCR, github_sync, plugin_system. CI не ставит PyQt6.
 
 ### 📌 Низкий приоритет (Low)
 - [ ] **TASK-006:** Привести в соответствие `requirements.txt` и `pyproject.toml` (дрейф версий); добавить объявление `speech_recognition` (используется, но не объявлен); убрать мёртвый `WeasyPrint==61.2` или начать его использовать.
 - [ ] **TASK-007:** Фиксация мелких багов ядра: дублирующийся лог «saved» в `threads.py:100-149`, шэдоуинг встроенного сигнала `QThread.finished` (`threads.py:18`), busy-wait в `tts_engine.py:181-183`, `<html lang="en">` захардкожен в `templates/base.html:2`.
+- [ ] **TASK-008:** Судьба недостижимых фичевых заглушек в `main_window.py` (`show_ai_assistant`, `ai_improve_text`, `ai_generate_outline`, `start_voice_input`, `export_task_board`, `generate_api_docs`): подключить к меню с честной маркировкой «заглушка» или удалить. Также `ModernSplashScreen` (не инстанцируется) и закомментированные `CustomTitleBar`/`AmbientGlowWidget`.
 
 ### 💡 Идеи на будущее (Ideas & Nice-to-Have)
 - [ ] Офлайн-замена внешних зависимостей: LaTeX (CodeCogs) и диаграммы (Kroki) → локальный рендер или кэш формул.
