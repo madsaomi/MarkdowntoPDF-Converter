@@ -29,6 +29,7 @@ test_files = [
     "test_github_sync.py",
     "test_pdf_encrypt.py",
     "test_gui_stubs.py",
+    "test_dependency_sync.py",
 ]
 
 passed = 0

@@ -1,30 +1,28 @@
-# 📋 Активная задача: нет активной задачи
+# 📋 Активная задача: TASK-006 — Синхронизация зависимостей
 
-**Статус:** 🟢 IDLE (Ожидание)  
+**Статус:** 🔵 IN_PROGRESS  
 **Дата создания:** 2026-10-20  
-**Дата завершения последней задачи:** 2026-10-20  
-**Исполнитель:** —  
-**Приоритет:** —  
+**Исполнитель:** Big Pickle (OpenCode)  
+**Приоритет:** LOW  
+**Связанный план:** [PLAN-006](file:///agents/plans/plan_006_dependency_sync.md)  
 
 ---
 
-## 🎯 Текущее состояние
-
-- ✅ **TASK-001 (критические баги)** — коммит `79ae4e5`. Отчёт: [`session_2026-10-20_01_big_pickle.md`](file:///agents/history/session_2026-10-20_01_big_pickle.md).
-- ✅ **TASK-002 (PDF-движок)** — коммит `ffcbbe6`. Отчёт: [`session_2026-10-20_02_big_pickle.md`](file:///agents/history/session_2026-10-20_02_big_pickle.md).
-- ✅ **TASK-003 (чистка мёртвого кода)** — коммит `1db3a81`. Отчёт: [`session_2026-10-20_03_big_pickle.md`](file:///agents/history/session_2026-10-20_03_big_pickle.md).
-- ✅ **TASK-004 (хрупкие UI-механики)** — коммит `451bfc9`. Отчёт: [`session_2026-10-20_04_big_pickle.md`](file:///agents/history/session_2026-10-20_04_big_pickle.md).
-- ✅ **TASK-005 (тестовое покрытие ядра)** — коммит `bb9426e`. Отчёт: [`session_2026-10-20_05_big_pickle.md`](file:///agents/history/session_2026-10-20_05_big_pickle.md). Попутно исправлен [BUG_002](file:///agents/bugs_and_fixes/BUG_002_reveal_js_slide_split.md).
-- Тесты: **18/18** тестовых файлов зелёные.
-- ⚠️ Локальный PDF-рендер недоступен: pip-пакет `weasyprint` не устанавливается под Python 3.15 (нет колёс `brotli`); портативного `weasyprint.exe` нет. Нужен Python ≤3.14 или exe.
+## 🎯 Цель задачи
+Устранить дрейф между `requirements.txt` и `pyproject.toml`: выровнять версии, объявить используемый, но незадекларированный `SpeechRecognition`, добавить extra `speech`.
 
 ---
 
-## 📌 Следующие действия
+## 📌 Пошаговый чек-лист выполнения:
 
-1. Выбрать задачу из [`backlog.md`](file:///agents/tasks/backlog.md) — кандидаты:
-   - **TASK-006 (LOW):** дрейф версий `requirements.txt` ↔ `pyproject.toml`.
-   - **TASK-007 (LOW):** мелкие баги ядра (дублирующийся лог «saved», шэдоуинг `QThread.finished`, busy-wait в TTS, `<html lang="en">`).
-   - **TASK-008 (LOW):** судьба фичевых заглушек.
-2. Создать план: `python brain.py plan "Название"`.
-3. Перенести выбранный backlog-элемент в этот файл с чек-листом (Plan-First).
+- [ ] **Шаг 1:** `requirements.txt` — выровнять операторы версий, добавить `SpeechRecognition`.
+- [ ] **Шаг 2:** `pyproject.toml` — добавить `MarkupSafe`, extra `speech`, расширить `all`.
+- [ ] **Шаг 3:** `tests/test_dependency_sync.py` — сверка обоих файлов и покрытие используемых в коде библиотек.
+- [ ] **Шаг 4:** Верификация — регистрация в `run_all.py`, полный прогон.
+
+---
+
+## 🧪 Критерии готовности (Definition of Done):
+1. Множества зависимостей `requirements.txt` и `pyproject.toml` согласованы.
+2. `SpeechRecognition` объявлен в обоих файлах.
+3. `tests/run_all.py` — все файлы PASS (19/19).

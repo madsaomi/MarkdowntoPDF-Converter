@@ -11,6 +11,7 @@ dependencies = [
     "markdown>=3.5",
     "pymdown-extensions>=10.7",
     "jinja2>=3.1",
+    "markupsafe>=2.1",
     "pygments>=2.17",
     "pypdf>=4.0",
 ]
@@ -24,6 +25,7 @@ pptx = ["python-pptx>=1.0"]
 images = ["PyMuPDF>=1.23", "Pillow>=10.0"]
 tts = ["pyttsx3>=2.90"]
 ocr = ["pytesseract>=0.3"]
+speech = ["SpeechRecognition>=3.10", "pyaudio>=0.2.13"]
 build = ["pyinstaller>=6.0"]
 all = [
     "PyQt6>=6.5.0", "weasyprint>=61.2",
@@ -31,6 +33,7 @@ all = [
     "ebooklib>=0.18", "python-pptx>=1.0",
     "PyMuPDF>=1.23", "Pillow>=10.0",
     "pyttsx3>=2.90", "pytesseract>=0.3",
+    "SpeechRecognition>=3.10", "pyaudio>=0.2.13",
     "pyinstaller>=6.0",
 ]
 test = ["pytest"]
