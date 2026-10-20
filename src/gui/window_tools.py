@@ -660,29 +660,9 @@ class ToolMethodsMixin:
         from src.gui.document_tools import update_markdown_toc_in_editor
         update_markdown_toc_in_editor(self)
 
-    def show_doc_templates_dialog(self):
-        from src.gui.document_tools import show_doc_templates_dialog
-        show_doc_templates_dialog(self)
-
-    def show_revision_history(self):
-        from src.gui.document_tools import show_revision_history
-        show_revision_history(self)
-
     def show_toc_generator(self):
         from src.gui.document_tools import show_toc_generator
         show_toc_generator(self)
-
-    def show_document_audit(self):
-        from src.gui.document_tools import show_document_audit
-        show_document_audit(self)
-
-    def show_merge_dialog(self):
-        from src.gui.document_tools import show_merge_dialog
-        show_merge_dialog(self)
-
-    def show_snippets_dialog(self):
-        from src.gui.document_tools import show_snippets_dialog
-        show_snippets_dialog(self)
 
     def show_table_generator_dialog(self):
         from src.gui.document_tools import show_table_generator_dialog
@@ -691,10 +671,6 @@ class ToolMethodsMixin:
     def show_design_style_dialog(self):
         from src.gui.document_tools import show_design_style_dialog
         show_design_style_dialog(self)
-
-    def show_readability_dashboard(self):
-        from src.gui.document_tools import show_readability_dashboard
-        show_readability_dashboard(self)
 
     def ocr_image_to_text(self):
         self.run_ocr()

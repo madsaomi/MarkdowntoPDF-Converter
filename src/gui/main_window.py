@@ -4,8 +4,6 @@ import re
 import logging
 import json
 from datetime import datetime
-from enum import Enum
-from dataclasses import dataclass
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QFileDialog, QTextEdit, QProgressBar,
@@ -13,18 +11,13 @@ from PyQt6.QtWidgets import (
     QTabWidget, QTextBrowser, QInputDialog, QListWidgetItem, QListWidget,
     QSpinBox, QFormLayout, QDialog, QDialogButtonBox, QColorDialog
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSettings, QFileSystemWatcher, QMutex, QTimer, QEvent, QRegularExpression
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSettings, QFileSystemWatcher, QTimer, QEvent, QRegularExpression
 from PyQt6.QtGui import QIcon, QAction, QShortcut, QKeySequence, QCursor, QColor
 
 from src.config import AppConfig
-from src.core.parser import MarkdownParser
-from src.core.renderer import PDFRenderer
-from src.core.docx_renderer import DOCXRenderer
-from src.core.pdf_encrypt import encrypt_pdf
 from src.gui.ui_layout import setup_ui
 from src.__version__ import __version__
 from src.gui.translations import TRANSLATIONS
-from src.gui.translator import Translator
 from src.gui.welcome_docs import WELCOME_RU, WELCOME_EN
 
 # ──────────────────────── Logging setup ────────────────────────
@@ -54,14 +47,7 @@ from src.gui.dialogs import (
 from src.gui import editor_commands, file_manager, preview_manager, document_tools
 from src.gui.multi_cursor import MultiCursorManager
 from src.core.template_vars import process_document_vars
-from src.core.plugin_system import load_plugins_from_dir, emit_hook
-from src.core.latex_preview import find_latex_expressions, render_latex_in_html
-from src.core.html_to_markdown import html_to_markdown
-from src.core.flashcards import extract_flashcards
-from src.core.citation_manager import get_citations, generate_bibliography, add_citation
-from src.core.glossary import extract_definitions
-from src.core.quiz_generator import generate_quiz_from_text
-from src.core.tts_engine import strip_markdown_for_tts
+from src.core.plugin_system import load_plugins_from_dir
 from src.gui.toast import ToastNotification
 from src.gui.about_dialog import AboutDialog
 from src.gui.custom_titlebar import CustomTitleBar
@@ -102,7 +88,6 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
         # Settings persistence
         self.settings = QSettings(AppConfig.APP_NAME, AppConfig.APP_NAME)
         self.current_lang = self.settings.value("language", "ru", str)
-        self.translator = Translator(self.current_lang)
         self.export_history = self.settings.value("export_history", [], list)
 
         # Start Kroki.io connectivity check
@@ -154,11 +139,7 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
         
         self.retranslate_ui()
 
-        # Connect search panel actions
-        self.btn_search_next.clicked.connect(self.search_next)
-        self.btn_replace_all.clicked.connect(self.replace_all_occurrences)
-        self.btn_search_close.clicked.connect(self.search_panel.hide)
-        self.search_find_input.returnPressed.connect(self.search_next)
+        # Connect search panel actions: см. ui_layout.py (panel_connections)
 
         # Markdown syntax highlighting in editor
         from src.gui.highlighter import MarkdownHighlighter
@@ -327,51 +308,6 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
         apply_theme()
         anim.start()
         self._theme_anim = anim
-
-    def preview_code_theme(self):
-        theme_file = self.code_theme_combo.currentData()
-        theme_dir = AppConfig.template_dir()
-        css_path = os.path.join(theme_dir, theme_file)
-        css_content = ""
-        if os.path.exists(css_path):
-            with open(css_path, 'r', encoding='utf-8') as f:
-                css_content = f.read()
-
-        sample_code = """<pre><code class="language-python">def hello_world():
-    name = "MarkdownToPDF"
-    print(f"Hello, {name}!")
-    return {"status": True, "count": 42}
-
-class Parser:
-    def __init__(self):
-        self.patterns = [r"\\*\\*(.+?)\\*\\*", r"`(.+?)`"]
-
-    def parse(self, text):
-        for pattern in self.patterns:
-            text = re.sub(pattern, r"<strong>\\1</strong>", text)
-        return text
-</code></pre>"""
-
-        html = f"""<!DOCTYPE html>
-<html><head><style>
-body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
-{css_content}
-</style></head><body>
-<h3>Предпросмотр темы: {theme_file}</h3>
-{sample_code}
-</body></html>"""
-
-        dlg = QDialog(self)
-        dlg.setWindowTitle(f"Тема кода: {theme_file}")
-        dlg.setMinimumSize(500, 400)
-        layout = QVBoxLayout(dlg)
-        browser = QTextBrowser()
-        browser.setHtml(html)
-        layout.addWidget(browser)
-        btn_close = QPushButton("Закрыть")
-        btn_close.clicked.connect(dlg.close)
-        layout.addWidget(btn_close)
-        dlg.exec()
 
     # ─── Drag & Drop ───
 
@@ -1150,21 +1086,6 @@ body {{ font-family: sans-serif; padding: 20px; background: #fff; }}
 
     def _wrap_selection(self, prefix: str, suffix: str):
         editor_commands._wrap_selection(self, prefix, suffix)
-    # ─── Emoji Shortcodes ───
-
-    EMOJI_MAP = {
-        ':rocket:': '🚀', ':fire:': '🔥', ':star:': '⭐', ':check:': '✅',
-        ':x:': '❌', ':warning:': '⚠️', ':bulb:': '💡', ':heart:': '❤️',
-        ':thumbsup:': '👍', ':thumbsdown:': '👎', ':clap:': '👏',
-        ':eyes:': '👀', ':tada:': '🎉', ':sparkles:': '✨', ':zap:': '⚡',
-        ':book:': '📖', ':pencil:': '📝', ':wrench:': '🔧', ':gear:': '⚙️',
-        ':bug:': '🐛', ':lock:': '🔒', ':unlock:': '🔓', ':key:': '🔑',
-        ':link:': '🔗', ':email:': '📧', ':calendar:': '📅', ':clock:': '🕐',
-        ':check_mark:': '✅', ':cross_mark:': '❌', ':heavy_check:': '✔️',
-        ':arrow_right:': '➡️', ':arrow_left:': '⬅️', ':arrow_up:': '⬆️',
-        ':arrow_down:': '⬇️', ':white_check:': '✅', ':red_circle:': '🔴',
-        ':green_circle:': '🟢', ':blue_circle:': '🔵', ':large_circle:': '⭕',
-    }
     # ─── Voice-to-Text ───
 
     def start_voice_input(self):
@@ -1309,19 +1230,6 @@ body{{font-family:sans-serif;padding:20px;}}
 
     def sync_scroll_preview(self, value):
         preview_manager.sync_scroll_preview(self, value)
-    # ─── Writing Goals (enhanced) ───
-
-    def set_writing_goal(self):
-        from PyQt6.QtWidgets import QInputDialog
-        goal, ok = QInputDialog.getInt(
-            self, "🎯 Writing Goal" if self.current_lang == "en" else "🎯 Цель по словам",
-            "Target word count (0 to disable):" if self.current_lang == "en" else "Целевое количество слов (0 для отключения):",
-            self.writing_goal, 0, 100000
-        )
-        if ok:
-            self.writing_goal = goal
-            self.goal_celebrated = False
-            self.update_text_statistics()
 
     # ─── Toast Notifications ───
 
