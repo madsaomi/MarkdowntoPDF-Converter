@@ -22,6 +22,13 @@ test_files = [
     "test_weasyprint_resolver.py",
     "test_watermark_css.py",
     "test_renderer_watermark_css.py",
+    "test_renderers.py",
+    "test_reveal_exporter.py",
+    "test_multi_export.py",
+    "test_plugin_system.py",
+    "test_github_sync.py",
+    "test_pdf_encrypt.py",
+    "test_gui_stubs.py",
 ]
 
 passed = 0

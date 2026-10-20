@@ -17,11 +17,12 @@ def export_reveal_js(html_content: str, metadata: dict, output_path: str, lang: 
 
     # Split content by headings into slides
     slides = []
+    # re.split с группой даёт: [до, level, heading, body, level, heading, body, ...]
+    # тройка (level, heading, body) начинается с индекса 1 и шагает на 3.
     parts = re.split(r'<h([12])[^>]*>(.*?)</h\1>', html_content, flags=re.DOTALL)
 
     if len(parts) > 1:
-        # First part before first heading (skip if empty)
-        for i in range(1, len(parts), 2):
+        for i in range(1, len(parts) - 1, 3):
             level = parts[i]
             heading = re.sub(r'<[^>]+>', '', parts[i + 1]).strip() if i + 1 < len(parts) else ''
             body = parts[i + 2] if i + 2 < len(parts) else ''
