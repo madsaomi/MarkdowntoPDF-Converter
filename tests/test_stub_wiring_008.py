@@ -45,7 +45,11 @@ def test_methods_wired_to_menu():
 
 
 def test_methods_still_defined():
-    """Методы по-прежнему определены в MainWindow (не удалены ошибочно)."""
+    """Методы по-прежнему доступны на MainWindow (не удалены ошибочно).
+
+    После декомпозиции (PLAN-010) методы могут жить в миксинах, поэтому
+    проверяем весь MRO, а не только тело класса.
+    """
     tree = ast.parse(_read(MAIN_WINDOW), MAIN_WINDOW)
     defined = set()
     for cls in ast.walk(tree):
@@ -53,8 +57,19 @@ def test_methods_still_defined():
             for node in cls.body:
                 if isinstance(node, ast.FunctionDef):
                     defined.add(node.name)
+    # методы, унаследованные из миксинов в src/gui/mixins/
+    mixins_dir = os.path.join(os.path.dirname(MAIN_WINDOW), "mixins")
+    if os.path.isdir(mixins_dir):
+        for fn in os.listdir(mixins_dir):
+            if not fn.endswith(".py"):
+                continue
+            for node in ast.walk(ast.parse(_read(os.path.join(mixins_dir, fn)))):
+                if isinstance(node, ast.ClassDef):
+                    for item in node.body:
+                        if isinstance(item, ast.FunctionDef):
+                            defined.add(item.name)
     missing = [m for m in WIRED_METHODS if m not in defined]
-    assert not missing, f"Методы отсутствуют в MainWindow: {missing}"
+    assert not missing, f"Методы отсутствуют в MainWindow (с учётом миксинов): {missing}"
     print("[PASS] test_methods_still_defined")
 
 

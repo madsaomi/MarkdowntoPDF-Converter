@@ -33,6 +33,7 @@ test_files = [
     "test_core_fixes_007.py",
     "test_stub_wiring_008.py",
     "test_release_config.py",
+    "test_decomposition_010.py",
 ]
 
 passed = 0

@@ -2,13 +2,12 @@ import sys
 import os
 import re
 import logging
-import json
 from datetime import datetime
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QFileDialog, QTextEdit, QProgressBar,
     QMessageBox, QComboBox, QLineEdit, QGroupBox, QGridLayout, QMenu,
-    QTabWidget, QTextBrowser, QInputDialog, QListWidgetItem, QListWidget,
+    QTabWidget, QTextBrowser, QListWidgetItem, QListWidget,
     QSpinBox, QFormLayout, QDialog, QDialogButtonBox, QColorDialog
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSettings, QFileSystemWatcher, QTimer, QEvent, QRegularExpression
@@ -51,6 +50,11 @@ from src.core.plugin_system import load_plugins_from_dir
 from src.gui.toast import ToastNotification
 from src.gui.about_dialog import AboutDialog
 from src.gui.window_tools import ToolMethodsMixin
+from src.gui.mixins.export_history import ExportHistoryMixin
+from src.gui.mixins.ai_tools import AiToolsMixin
+from src.gui.mixins.presets import PresetsMixin
+from src.gui.mixins.document_ops import DocumentOpsMixin
+from src.gui.mixins.editor_tools import EditorToolsMixin
 
 # ──────────────────────── Dark / Light stylesheets ────────────────────────
 
@@ -63,7 +67,8 @@ APP_NAME = "MarkdownToPDF_Pro"
 
 # ──────────────────────── Main Window ────────────────────────
 
-class MainWindow(QMainWindow, ToolMethodsMixin):
+class MainWindow(QMainWindow, ToolMethodsMixin, ExportHistoryMixin, AiToolsMixin,
+                 PresetsMixin, DocumentOpsMixin, EditorToolsMixin):
     MAX_RECENT = 10
 
     def __init__(self):
@@ -651,95 +656,9 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
 
     # ─── Presets ───
 
-    def load_presets(self):
-        self.preset_combo.blockSignals(True)
-        self.preset_combo.clear()
-        
-        # Load presets dict from settings
-        presets_str = self.settings.value("presets", "{}", str)
-        try:
-            self.presets = json.loads(presets_str)
-        except Exception:
-            self.presets = {}
-            
-        default_label = "(по умолчанию)" if self.current_lang == "ru" else "(default)"
-        self.preset_combo.addItem(default_label)
-        
-        for name in sorted(self.presets.keys()):
-            self.preset_combo.addItem(name)
-            
-        self.preset_combo.blockSignals(False)
 
-    def save_preset(self):
-        title = self.tr_msg("preset_prompt_title")
-        desc = self.tr_msg("preset_prompt_desc")
-        name, ok = QInputDialog.getText(self, title, desc)
-        name = name.strip()
-        if not ok or not name:
-            return
-            
-        # Capture current settings (password excluded for security)
-        opt = self._get_options()
-        preset_data = {
-            "doc_theme": self.doc_theme_combo.currentIndex(),
-            "code_theme": self.code_theme_combo.currentIndex(),
-            "paper_size": self.paper_combo.currentIndex(),
-            "watermark": opt.watermark,
-            "footer_text": opt.footer_text,
-            "custom_css": opt.custom_css,
-            "export_format": self.format_combo.currentIndex(),
-            "margins": opt.margins,
-            "docx_template": opt.docx_template,
-            "page_numbers": opt.page_numbers,
-            "page_num_format": self.combo_page_format.currentIndex(),
-            "presentation_mode": opt.is_presentation,
-        }
-        
-        self.presets[name] = preset_data
-        self.settings.setValue("presets", json.dumps(self.presets))
-        
-        self.load_presets()
-        # Select newly created preset
-        idx = self.preset_combo.findText(name)
-        if idx >= 0:
-            self.preset_combo.setCurrentIndex(idx)
-            
-        QMessageBox.information(self, self.tr_msg("msg_done_title"), self.tr_msg("msg_preset_saved", name))
 
-    def delete_preset(self):
-        idx = self.preset_combo.currentIndex()
-        if idx <= 0: # Cannot delete default
-            return
-        name = self.preset_combo.currentText()
-        if name in self.presets:
-            del self.presets[name]
-            self.settings.setValue("presets", json.dumps(self.presets))
-            self.load_presets()
-            QMessageBox.information(self, self.tr_msg("msg_done_title"), self.tr_msg("msg_preset_deleted", name))
 
-    def on_preset_changed(self, idx: int):
-        if idx <= 0:
-            # Load factory default settings or just keep current
-            return
-        name = self.preset_combo.currentText()
-        preset = self.presets.get(name)
-        if not preset:
-            return
-            
-        # Apply preset to UI elements
-        self.doc_theme_combo.setCurrentIndex(preset.get("doc_theme", 0))
-        self.code_theme_combo.setCurrentIndex(preset.get("code_theme", 0))
-        self.paper_combo.setCurrentIndex(preset.get("paper_size", 0))
-        self.watermark_input.setText(preset.get("watermark", ""))
-        self.footer_input.setText(preset.get("footer_text", ""))
-        self.custom_css_input.setText(preset.get("custom_css", ""))
-        self.format_combo.setCurrentIndex(preset.get("export_format", 0))
-        self.margins_input.setText(preset.get("margins", ""))
-        self.docx_template_input.setText(preset.get("docx_template", ""))
-        self.chk_page_numbers.setChecked(preset.get("page_numbers", False))
-        self.combo_page_format.setCurrentIndex(preset.get("page_num_format", 0))
-        self.combo_page_format.setEnabled(self.chk_page_numbers.isChecked())
-        self.chk_presentation_mode.setChecked(preset.get("presentation_mode", False))
 
     # ─── Translations ───
 
@@ -882,185 +801,16 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
         self._render_live_preview()
         self.update_text_statistics()
 
-    def on_editor_changed(self):
-        self.is_welcome_doc_active = False
-        self.preview_timer.start()
-        self.update_text_statistics()
 
     # ─── Statistics & Search & History logics ───
 
-    def update_text_statistics(self):
-        text = self.live_editor.toPlainText()
-        char_count = len(text)
-        words = [w for w in text.split() if w.strip()]
-        word_count = len(words)
-        
-        reading_time = max(1, round(word_count / 180))
-        if word_count == 0:
-            reading_time = 0
-            
-        t = lambda k: TRANSLATIONS[self.current_lang].get(k, k)
-        stats_text = (
-            f"{t('stats_words').format(word_count)} | "
-            f"{t('stats_chars').format(char_count)} | "
-            f"{t('stats_reading').format(reading_time)}"
-        )
-        
-        if self.writing_goal > 0:
-            pct = min(100, int((word_count / self.writing_goal) * 100))
-            stats_text += f" | 🎯 {pct}% ({word_count}/{self.writing_goal} {t('stats_words').format('').strip()})"
-            
-            if pct >= 100 and not self.goal_celebrated:
-                self.goal_celebrated = True
-                QMessageBox.information(
-                    self,
-                    t('goal_celebrate_title'),
-                    t('goal_celebrate_desc').format(self.writing_goal)
-                )
-            
-        self.stats_label.setText(stats_text)
 
-    def toggle_search_panel(self):
-        if self.search_panel.isVisible():
-            self.search_panel.hide()
-            self.live_editor.setFocus()
-        else:
-            self.search_panel.show()
-            self.search_find_input.setFocus()
-            self.search_find_input.selectAll()
 
-    def search_next(self):
-        query = self.search_find_input.text()
-        if not query:
-            return
-        
-        regex_mode = self.search_regex_checkbox.isChecked()
-        if regex_mode:
-            expr = QRegularExpression(query)
-            found = self.live_editor.find(expr)
-            if not found:
-                cursor = self.live_editor.textCursor()
-                cursor.movePosition(cursor.MoveOperation.Start)
-                self.live_editor.setTextCursor(cursor)
-                self.live_editor.find(expr)
-        else:
-            found = self.live_editor.find(query)
-            if not found:
-                cursor = self.live_editor.textCursor()
-                cursor.movePosition(cursor.MoveOperation.Start)
-                self.live_editor.setTextCursor(cursor)
-                self.live_editor.find(query)
 
-    def replace_all_occurrences(self):
-        query = self.search_find_input.text()
-        replace_text = self.search_replace_input.text()
-        if not query:
-            return
-            
-        cursor = self.live_editor.textCursor()
-        scroll_pos = self.live_editor.verticalScrollBar().value()
-        text = self.live_editor.toPlainText()
-        
-        regex_mode = self.search_regex_checkbox.isChecked()
-        if regex_mode:
-            import re
-            try:
-                new_text = re.sub(query, replace_text, text)
-            except Exception as e:
-                QMessageBox.critical(self, "RegEx Error", f"Invalid regular expression:\n{e}")
-                return
-        else:
-            new_text = text.replace(query, replace_text)
-        
-        self.live_editor.blockSignals(True)
-        self.live_editor.setPlainText(new_text)
-        self.live_editor.blockSignals(False)
-        
-        self.live_editor.setTextCursor(cursor)
-        self.live_editor.verticalScrollBar().setValue(scroll_pos)
-        self._render_live_preview()
-        self.update_text_statistics()
 
     def on_finished_one(self, success: bool, filepath: str):
         if success:
             self.add_to_export_history(filepath)
-
-    def add_to_export_history(self, filepath: str):
-        if filepath in self.export_history:
-            self.export_history.remove(filepath)
-        self.export_history.insert(0, filepath)
-        self.export_history = self.export_history[:5]
-        self.settings.setValue("export_history", self.export_history)
-        self.update_export_history_ui()
-
-    def update_export_history_ui(self):
-        t = lambda k: TRANSLATIONS[self.current_lang].get(k, k)
-        
-        # Clear layout
-        while self.history_layout.count() > 0:
-            item = self.history_layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-                
-        if not self.export_history:
-            self.history_placeholder = QLabel(t('history_placeholder') if 'history_placeholder' in TRANSLATIONS[self.current_lang] else "Журнал экспорта пуст")
-            self.history_placeholder.setStyleSheet("color: #94a3b8; font-style: italic; font-size: 11px; padding: 5px;")
-            self.history_layout.addWidget(self.history_placeholder)
-            return
-            
-        for filepath in self.export_history:
-            row = QWidget()
-            row_layout = QHBoxLayout(row)
-            row_layout.setContentsMargins(5, 2, 5, 2)
-            row_layout.setSpacing(10)
-            
-            lbl = QLabel(os.path.basename(filepath))
-            lbl.setStyleSheet("font-size: 11px; color: #94a3b8; font-weight: bold;")
-            lbl.setToolTip(filepath)
-            
-            btn_open = QPushButton(t('btn_history_open'))
-            btn_open.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn_open.setStyleSheet("""
-                QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #2563eb,stop:1 #60a5fa); color: white; padding: 3px 8px; border-radius: 6px; font-size: 10px; border: none; font-weight: bold; }
-                QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #1d4ed8,stop:1 #2563eb); }
-            """)
-            btn_open.clicked.connect(lambda checked, p=filepath: self.open_exported_file(p))
-            
-            btn_folder = QPushButton(t('btn_history_folder'))
-            btn_folder.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn_folder.setStyleSheet("""
-                QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #475569,stop:1 #64748b); color: white; padding: 3px 8px; border-radius: 6px; font-size: 10px; border: none; font-weight: bold; }
-                QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #334155,stop:1 #475569); }
-            """)
-            btn_folder.clicked.connect(lambda checked, p=filepath: self.open_exported_folder(p))
-            
-            row_layout.addWidget(lbl, stretch=1)
-            row_layout.addWidget(btn_open)
-            row_layout.addWidget(btn_folder)
-            
-            self.history_layout.addWidget(row)
-
-    def open_exported_file(self, filepath: str):
-        if not os.path.exists(filepath):
-            QMessageBox.warning(self, self.tr_msg("msg_file_not_found"), self.tr_msg("msg_file_moved", filepath))
-            return
-        try:
-            os.startfile(filepath)
-        except Exception as e:
-            logger.error("Failed to open file %s: %s", filepath, e)
-            
-    def open_exported_folder(self, filepath: str):
-        if not os.path.exists(filepath):
-            QMessageBox.warning(self, self.tr_msg("msg_file_not_found"), self.tr_msg("msg_file_moved", filepath))
-            return
-        try:
-            import subprocess
-            subprocess.run(["explorer", "/select,", os.path.normpath(filepath)], timeout=10)
-        except subprocess.TimeoutExpired:
-            logger.warning("Explorer open timed out for %s", filepath)
-        except Exception as e:
-            logger.error("Failed to open folder for %s: %s", filepath, e)
 
     def get_windows_theme(self) -> str:
         """Detect whether Windows is in dark or light mode. Returns 'dark' or 'light'."""
@@ -1076,181 +826,17 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
         except Exception:
             return "light"
 
-    def autosave_draft(self):
-        document_tools.autosave_draft(self)
 
-    def save_current_workspace_file(self):
-        file_manager.save_current_workspace_file(self)
 
-    def save_revision(self):
-        document_tools.save_revision(self)
 
-    def show_revision_history(self):
-        document_tools.show_revision_history(self)
 
-    def goto_editor_line(self, line_num: int):
-        cursor = self.live_editor.textCursor()
-        cursor.movePosition(cursor.MoveOperation.Start)
-        for _ in range(line_num - 1):
-            cursor.movePosition(cursor.MoveOperation.Down)
-        
-        # Select full line
-        cursor.movePosition(cursor.MoveOperation.StartOfLine)
-        cursor.movePosition(cursor.MoveOperation.EndOfLine, cursor.MoveMode.KeepAnchor)
-        
-        self.live_editor.setTextCursor(cursor)
-        self.live_editor.setFocus()
 
-    def show_document_audit(self):
-        document_tools.show_document_audit(self)
 
-    def auto_fix_document_issues(self):
-        document_tools.auto_fix_document_issues(self)
 
-    def show_doc_templates_dialog(self):
-        from src.gui.templates_data import get_template_list, get_template_content
-        templates = get_template_list()
-        names = [name for _, name in templates]
-        chosen, ok = QInputDialog.getItem(
-            self,
-            self.tr_msg("doc_templates_title"),
-            self.tr_msg("doc_templates_label"),
-            names, 0, False
-        )
-        if ok and chosen:
-            for key, name in templates:
-                if name == chosen:
-                    content = get_template_content(key)
-                    if content:
-                        self.live_editor.setPlainText(content)
-                        self.update_preview_from_editor()
-                    break
     # ─── Quick Formatting Methods ───
 
     def _wrap_selection(self, prefix: str, suffix: str):
         editor_commands._wrap_selection(self, prefix, suffix)
-    # ─── Voice-to-Text ───
-
-    def start_voice_input(self):
-        try:
-            import speech_recognition as sr
-            recognizer = sr.Recognizer()
-            with sr.Microphone() as source:
-                self.append_log("🎤 Слушаю...")
-                QApplication.processEvents()
-                audio = recognizer.listen(source, timeout=10)
-                text = recognizer.recognize_google(audio, language='ru-RU')
-                cursor = self.live_editor.textCursor()
-                cursor.insertText(text)
-        except ImportError:
-            QMessageBox.information(self, "Voice", "Установите: pip install SpeechRecognition pyaudio")
-        except Exception as e:
-            self.append_log(f"🎤 Ошибка: {e}")
-
-    # ─── AI Text ───
-
-    def ai_improve_text(self):
-        cursor = self.live_editor.textCursor()
-        selected = cursor.selectedText()
-        if not selected:
-            QMessageBox.information(self, "AI", "Выделите текст")
-            return
-        from src.core.ai_assistant import get_ai_assistant
-        assistant = get_ai_assistant()
-        suggestions = assistant.analyze(selected, self.current_lang)
-        if suggestions:
-            lines = []
-            for s in suggestions[:5]:
-                lines.append(f"• [{s.category}] {s.explanation}")
-            QMessageBox.information(self, "AI Suggestions", "\n".join(lines))
-        else:
-            improved = selected.strip()
-            improved = ' '.join(improved.split())
-            cursor.insertText(improved)
-            self.toast("Текст обработан", "success")
-
-    def ai_generate_outline(self):
-        text = self.live_editor.toPlainText()
-        from src.core.ai_assistant import get_ai_assistant
-        assistant = get_ai_assistant()
-        outline = assistant.generate_outline(text, self.current_lang)
-        cursor = self.live_editor.textCursor()
-        cursor.movePosition(cursor.MoveOperation.Start)
-        cursor.insertText(outline + "\n\n")
-        self.toast("Оглавление сгенерировано", "success")
-
-    def show_ai_assistant(self):
-        from src.core.ai_assistant import get_ai_assistant
-        assistant = get_ai_assistant()
-        text = self.live_editor.toPlainText()
-        if not text.strip():
-            self.toast("Нет текста для анализа", "warning")
-            return
-        suggestions = assistant.analyze(text, self.current_lang)
-        if not suggestions:
-            self.toast("Проблем не найдено! Текст хороший.", "success")
-            return
-        lines = [f"🔍 Найдено {len(suggestions)} предложений:\n"]
-        for s in suggestions[:10]:
-            emoji = {"grammar": "📝", "style": "✨", "readability": "📖", "structure": "🏗️"}.get(s.category, "💡")
-            lines.append(f"{emoji} Строка {s.line}: {s.explanation}")
-        QMessageBox.information(self, "AI Writing Assistant", "\n".join(lines))
-
-    # ─── Task Board ───
-
-    def export_task_board(self):
-        text = self.live_editor.toPlainText()
-        import re
-        todo, done = [], []
-        for line in text.split('\n'):
-            stripped = line.strip()
-            if re.match(r'^- \[[ x]\]\s', stripped):
-                content = re.sub(r'^- \[[ x]\]\s*', '', stripped)
-                (done if '[x]' in stripped else todo).append(content)
-        html = f"""<html><head><style>
-body{{font-family:sans-serif;padding:20px;}}
-.board{{display:flex;gap:20px;}}
-.column{{background:white;border-radius:8px;padding:16px;min-width:250px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}}
-.todo{{border-top:3px solid #3498db;}}.done{{border-top:3px solid #27ae60;}}
-.task{{background:#f8f9fa;padding:8px;margin:6px 0;border-radius:4px;font-size:14px;}}
-</style></head><body><h2>📋 Task Board</h2><div class="board">
-<div class="column todo"><h3>To Do ({len(todo)})</h3>{''.join(f'<div class="task">{t}</div>' for t in todo)}</div>
-<div class="column done"><h3>Done ({len(done)})</h3>{''.join(f'<div class="task" style="text-decoration:line-through;color:#999">{t}</div>' for t in done)}</div>
-</div></body></html>"""
-        dlg = QDialog(self); dlg.setWindowTitle("Task Board"); dlg.setMinimumSize(700, 400)
-        layout = QVBoxLayout(dlg)
-        browser = QTextBrowser(); browser.setHtml(html); layout.addWidget(browser)
-        btn = QPushButton("Закрыть"); btn.clicked.connect(dlg.close); layout.addWidget(btn)
-        dlg.exec()
-
-    # ─── API Docs Generator ───
-
-    def generate_api_docs(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Python файл", "", "Python (*.py)")
-        if not path: return
-        try:
-            import ast
-            with open(path, 'r', encoding='utf-8') as f: source = f.read()
-            tree = ast.parse(source)
-            docs = [f"# API: {os.path.basename(path)}\n"]
-            for node in ast.iter_child_nodes(tree):
-                if isinstance(node, ast.ClassDef):
-                    docs.append(f"\n## class {node.name}\n")
-                    if ast.get_docstring(node): docs.append(f"{ast.get_docstring(node)}\n")
-                    for item in node.body:
-                        if isinstance(item, ast.FunctionDef):
-                            args = [a.arg for a in item.args.args if a.arg != 'self']
-                            docs.append(f"### {item.name}({', '.join(args)})\n")
-                            if ast.get_docstring(item): docs.append(f"{ast.get_docstring(item)}\n")
-                elif isinstance(node, ast.FunctionDef):
-                    args = [a.arg for a in node.args.args]
-                    docs.append(f"\n## def {node.name}({', '.join(args)})\n")
-                    if ast.get_docstring(node): docs.append(f"{ast.get_docstring(node)}\n")
-            self.live_editor.setPlainText('\n'.join(docs))
-            self.update_preview_from_editor()
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", str(e))
-
 
     # ─── Smart Auto-completion Event Filter ───
 
