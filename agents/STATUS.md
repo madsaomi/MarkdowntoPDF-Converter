@@ -26,8 +26,8 @@
 ---
 
 ## 🎯 Что делается прямо сейчас (Текущий фокус):
-- 👉 **TASK-001** — устранение критических багов (план: [`plan_001_fix_critical_bugs.md`](file:///agents/plans/plan_001_fix_critical_bugs.md))
-- Детали — в [`agents/tasks/active_task.md`](file:///agents/tasks/active_task.md)
+- ✅ **TASK-001** — критические баги устранены (2026-10-20, коммит `79ae4e5`, план: [`plan_001_fix_critical_bugs.md`](file:///agents/plans/plan_001_fix_critical_bugs.md))
+- Следующая кандидатура: **TASK-002** — решение по PDF-движку (см. [`backlog.md`](file:///agents/tasks/backlog.md))
 
 ---
 

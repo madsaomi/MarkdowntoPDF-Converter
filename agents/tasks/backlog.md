@@ -10,12 +10,13 @@
 ## 🚀 Предстоящие задачи (Upcoming Tasks)
 
 ### 📌 Высокий приоритет (High)
-- [ ] **TASK-001:** Устранение критических багов по итогам аудита от 2026-10-20:
-  - `main_window.py:1021` — `self.history_layout` нигде не создаётся → `AttributeError` при первом экспорте.
-  - `window_tools.py:31` — импорт несуществующей функции `show_conversion_history` из `document_tools` → пункт меню «Export History» падает.
-  - `window_tools.py:542` — `NameError: QInputDialog` в `show_cloud_templates`.
-  - `pptx_renderer.py:77` — `IndexError` при контенте до первого заголовка (пустой `self.slides`).
-  - `image_renderer.py:45,108-116` — утечка temp-логфайла WeasyPrint при каждом экспорте PNG/JPG.
+- [x] **TASK-001 (✅ 2026-10-20, коммит `79ae4e5`):** Устранение критических багов по итогам аудита от 2026-10-20:
+  - `main_window.py:1021` — `self.history_layout` нигде не создаётся → **FIXED** (вкладка History в `ui_layout.py`).
+  - `window_tools.py:31` — импорт несуществующей функции `show_conversion_history` → **FIXED** (переключение вкладки).
+  - `window_tools.py:542` — `NameError: QInputDialog` → **FIXED** (импорт добавлен).
+  - `pptx_renderer.py:77` — `IndexError` при контенте до первого заголовка → **FIXED** (+ регрессионный тест `tests/test_pptx_parser.py`).
+  - `image_renderer.py:45,108-116` — утечка temp-логфайла WeasyPrint → **FIXED** (+ защита `temp_pdf_path` в finally).
+  - Детали: [`BUG_001`](file:///agents/bugs_and_fixes/BUG_001_critical_gui_pptx_bugs.md), [`PLAN-001`](file:///agents/plans/plan_001_fix_critical_bugs.md).
 - [ ] **TASK-002:** Решить проблему движка PDF: `weasyprint-windows/dist/weasyprint.exe` отсутствует в репозитории, pip-пакет `WeasyPrint==61.2` нигде не импортируется. Без внешнего бинарника рендер PDF невозможен, сборка на чистом клоне падает (`build.py:43`, `renderer.py:118`).
 
 ### 📌 Средний приоритет (Medium)

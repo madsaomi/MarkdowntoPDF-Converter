@@ -1,6 +1,6 @@
 # 📐 План реализации: PLAN-001 — Устранение критических багов (Critical Bug Fix)
 
-> **Статус:** 🟢 APPROVED  
+> **Статус:** ✅ COMPLETED (2026-10-20, коммит `79ae4e5`)  
 > **Дата создания:** 2026-10-20  
 > **Автор / Агент:** Big Pickle (OpenCode)  
 > **Связанная задача:** [TASK-001](file:///agents/tasks/active_task.md)  
@@ -32,18 +32,18 @@
 
 ## 3. 📝 Пошаговый план реализации (Atomic Steps)
 
-- [ ] **Этап 1: GUI — журнал экспорта**
-  - [ ] Шаг 1.1: Добавить вкладку History + `window.history_layout` в `ui_layout.py`.
-  - [ ] Шаг 1.2: Переписать `show_conversion_history` на переключение вкладки (без битого импорта).
-- [ ] **Этап 2: GUI — импорт QInputDialog**
-  - [ ] Шаг 2.1: Добавить `QInputDialog` в импорты `window_tools.py`.
-- [ ] **Этап 3: Ядро — рендереры**
-  - [ ] Шаг 3.1: Исправить `_flush_content` в `pptx_renderer.py` (garbage-slide вместо IndexError).
-  - [ ] Шаг 3.2: Добавить удаление `temp_err_path` в `finally` `image_renderer.py`.
-- [ ] **Этап 4: Верификация**
-  - [ ] Шаг 4.1: `python -m py_compile` всех изменённых файлов.
-  - [ ] Шаг 4.2: Запуск `python tests/run_all.py` — все тесты зелёные.
-  - [ ] Шаг 4.3: Юнит-тест на фикс PPTX (преамбула до первого заголовка).
+- [x] **Этап 1: GUI — журнал экспорта**
+  - [x] Шаг 1.1: Добавить вкладку History + `window.history_layout` в `ui_layout.py`.
+  - [x] Шаг 1.2: Переписать `show_conversion_history` на переключение вкладки (без битого импорта).
+- [x] **Этап 2: GUI — импорт QInputDialog**
+  - [x] Шаг 2.1: Добавить `QInputDialog` в импорты `window_tools.py`.
+- [x] **Этап 3: Ядро — рендереры**
+  - [x] Шаг 3.1: Исправить `_flush_content` в `pptx_renderer.py` (garbage-slide вместо IndexError).
+  - [x] Шаг 3.2: Добавить удаление `temp_err_path` в `finally` `image_renderer.py` (+ `temp_pdf_path` — дополнительный фикс NameError в finally).
+- [x] **Этап 4: Верификация**
+  - [x] Шаг 4.1: `python -m py_compile` всех изменённых файлов.
+  - [x] Шаг 4.2: Запуск `python tests/run_all.py` — 8/8 файлов зелёные.
+  - [x] Шаг 4.3: Юнит-тест на фикс PPTX (преамбула до первого заголовка) — `tests/test_pptx_parser.py`.
 
 ---
 
