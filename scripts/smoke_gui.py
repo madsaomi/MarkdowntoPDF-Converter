@@ -91,6 +91,38 @@ def main() -> int:
         print(f"[FAIL] _render_live_preview: {e}")
         traceback.print_exc()
 
+    # 7. Реальный экспорт в HTML и DOCX (без PDF-движка)
+    try:
+        import tempfile
+        from src.core.multi_export import multi_export
+        from src.config import AppConfig
+
+        def _export_ok(path: str) -> bool:
+            return bool(path) and os.path.isfile(path) and os.path.getsize(path) > 0
+
+        with tempfile.TemporaryDirectory() as tmp:
+            src_md = os.path.join(tmp, "smoke.md")
+            with open(src_md, "w", encoding="utf-8") as f:
+                f.write("# Тест\n\nПараграф **жирный** и *курсив*.\n\n- один\n- два\n")
+            res = multi_export(
+                src_md, tmp, ["html", "docx"],
+                template_dir=AppConfig.template_dir(),
+            )
+            # multi_export при сбое рендерера возвращает строку-ошибку вместо пути.
+            for fmt in ("html", "docx"):
+                value = res.get(fmt, "")
+                if _export_ok(value):
+                    print(f"[PASS] экспорт {fmt.upper()}")
+                else:
+                    failures.append(f"экспорт {fmt.upper()}: {value}")
+                    print(f"[FAIL] экспорт {fmt.upper()}: {value}")
+    except ImportError as e:
+        print(f"[SKIP] экспорт требует доп. зависимости: {e}")
+    except Exception as e:
+        failures.append(f"экспорт: {e}")
+        print(f"[FAIL] экспорт: {e}")
+        traceback.print_exc()
+
     try:
         win.close()
     except Exception:
