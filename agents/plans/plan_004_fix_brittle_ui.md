@@ -1,6 +1,6 @@
 # 📐 План реализации: PLAN-004 — Починка хрупких UI-механик
 
-> **Статус:** 🟢 APPROVED  
+> **Статус:** ✅ COMPLETED (2026-10-20, коммит `451bfc9`)  
 > **Дата создания:** 2026-10-20  
 > **Автор / Агент:** Big Pickle (OpenCode)  
 > **Связанная задача:** [TASK-004](file:///agents/tasks/active_task.md)  
@@ -22,23 +22,25 @@
 
 ## 3. 📝 Пошаговый план реализации (Atomic Steps)
 
-- [ ] **Этап 1: Сплиттер (window_tools.py)**
-  - [ ] 1.1: `setSizes` → 2 значения; режимы `both` / `editor` / `preview` через `setVisible`, плюс корректные размеры.
-- [ ] **Этап 2: Watermark-дизайнер (watermark_designer.py + ui_layout.py + renderer.py + base.html)**
-  - [ ] 2.1: `watermark_designer` генерирует **CSS-фрагмент** `result_css` (без пользовательского HTML), новые сигналы-свойства `preview_html()` для превью.
-  - [ ] 2.2: `chk_diagonal`/`chk_tiled` реально влияют на генерацию (угол/повтор).
-  - [ ] 2.3: в UI-настройках добавляется `watermark_css` (QLineEdit, скрытое поле-носитель).
-  - [ ] 2.4: `window_tools.show_watermark_designer` пишет `result_css` в `watermark_css_input` (а не теряет его).
-  - [ ] 2.5: `ConversionOptions.watermark_css` + прокидывание в `_get_options` → `ConversionThread` → `PDFRenderer.render/render_html` → `base.html` (`{{ watermark_css }}` в `<style>` последним).
-- [ ] **Этап 3: Меню Language (ui_layout.py + main_window.py)**
-  - [ ] 3.1: `window.lang_menu = lang_menu` (+ `window.help_menu`), ярлык перевода `menu_language` убрать из ui_layout.
-  - [ ] 3.2: `retranslate_ui` переводит и локализует пункты меню: File, Tools, Language, Help (с `menu_file`…, фолбэк — английские названия).
-- [ ] **Этап 4: `closeEvent` (main_window.py)**
-  - [ ] 4.1: остановить таймеры (`autosave_timer`, `preview_timer`), очистить watcher, отменить+дождаться `self.thread` и `kroki_thread`, сохранить настройки и черновик.
-- [ ] **Этап 5: Тесты и верификация**
-  - [ ] 5.1: `tests/test_watermark_css.py` — генерация CSS в дизайнере (без Qt: чистые функции/формат).
-  - [ ] 5.2: `tests/test_renderer_watermark_css.py` — `PDFRenderer.render_html` вставляет `watermark_css` в `<style>` последним.
-  - [ ] 5.3: `py_compile` + `python tests/run_all.py` (все файлы).
+- [x] **Этап 1: Сплиттер (window_tools.py)**
+  - [x] 1.1: `setSizes` → 2 значения; режимы `both` / `editor` / `preview` через `setVisible`.
+- [x] **Этап 2: Watermark-дизайнер**
+  - [x] 2.1: `build_watermark_css()` генерирует **CSS** (без пользовательского HTML), `result_css` = CSS.
+  - [x] 2.2: `chk_diagonal`/`chk_tiled` реально влияют на генерацию.
+  - [x] 2.3: добавлен скрытый носитель `watermark_css_input`.
+  - [x] 2.4: `show_watermark_designer` пишет CSS в носитель (результат больше не теряется).
+  - [x] 2.5: `ConversionOptions.watermark_css` → `ConversionThread` → `PDFRenderer.render/render_html` → `base.html`.
+- [x] **Этап 3: Меню Language**
+  - [x] 3.1: `window.lang_menu`/`tools_menu`/`help_menu`/`file_menu` экспонированы.
+  - [x] 3.2: `retranslate_ui` переводит все четыре меню (+ новый ключ `menu_help`).
+- [x] **Этап 4: `closeEvent`**
+  - [x] 4.1: остановка таймеров, черновик, watcher, отмена+ожидание `self.thread` и `kroki_thread`.
+- [x] **Этап 5: Тесты и верификация**
+  - [x] 5.1: `tests/test_watermark_css.py` (5 проверок, включая санитизацию HTML из текста).
+  - [x] 5.2: `tests/test_renderer_watermark_css.py` (проброс + приоритет CSS).
+  - [x] 5.3: `py_compile` OK; `tests/run_all.py` — **11/11 зелёные**; HTML-смоук CLI: `.watermark` и кастомный CSS в документе.
+
+> **Попутно:** инициализация `AppConfig.base_path()` уже исправлена в TASK-002; здесь дополнительно исправлена генерация HTML-preview дизайнера (раньше CSS-текст вставлялся в `<body>` как видимый текст).
 
 ## 4. 🛡️ Риски и откат
 - **Риски:** PyQt6 не установлен → GUI правится под `py_compile` + grep; логика вынесена в тестируемые чистые функции. `watermark_css` — новый параметр с дефолтом `''`, обратная совместимость сохраняется.

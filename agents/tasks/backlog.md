@@ -21,7 +21,7 @@
 
 ### 📌 Средний приоритет (Medium)
 - [x] **TASK-003 (✅ 2026-10-20, коммит `1db3a81`):** Чистка мёртвого и дублирующегося кода GUI: удалены 19 неиспользуемых импортов, неиспользуемый `self.translator`, `EMOJI_MAP`, `preview_code_theme`, недостижимый дубль `set_writing_goal`, 6 затенённых дублей методов миксина в `window_tools.py`, дубль connect-панели поиска (−119 строк). Попутно опровергнут пункт аудита: `save_version` достижим из меню — сохранён. См. [PLAN-003](file:///agents/plans/plan_003_cleanup_dead_code.md).
-- [ ] **TASK-004:** Починка хрупких UI-механик: `toggle_split_view` (3 размера для сплиттера с 2 виджетами, `window_tools.py:247-255`), watermark-дизайнер отбрасывает результат (`window_tools.py:94-96`), меню Language не переводится (`main_window.py:803-807`), `closeEvent` не останавливает потоки и таймеры.
+- [x] **TASK-004 (✅ 2026-10-20, коммит `451bfc9`):** Починка 4 хрупких UI-механик: `toggle_split_view` (2 виджета — теперь через `setVisible`), watermark-дизайнер (`build_watermark_css()` → новый `watermark_css` реально доходит до PDF), меню Language/Tools/Help переводится, `closeEvent` останавливает потоки и таймеры. См. [PLAN-004](file:///agents/plans/plan_004_fix_brittle_ui.md).
 - [ ] **TASK-005:** Расширение тестового покрытия: не покрыто ничего из рендереров (PDF/DOCX/EPUB/PPTX/Image), TTS/OCR, github_sync, plugin_system. CI не ставит PyQt6.
 
 ### 📌 Низкий приоритет (Low)
