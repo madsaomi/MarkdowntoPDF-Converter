@@ -30,6 +30,7 @@ test_files = [
     "test_pdf_encrypt.py",
     "test_gui_stubs.py",
     "test_dependency_sync.py",
+    "test_core_fixes_007.py",
 ]
 
 passed = 0

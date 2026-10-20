@@ -114,6 +114,9 @@ class AdvancedTTSEngine:
         self._playback_thread: Optional[threading.Thread] = None
         self._on_state_change: Optional[Callable] = None
         self._on_progress: Optional[Callable] = None
+        # Signalled by resume()/stop() to wake a paused playback thread
+        # without a busy-wait loop.
+        self._resume_event = threading.Event()
 
     def get_voices(self, language: str = None) -> list[VoiceProfile]:
         """Get available voices, optionally filtered by language."""
@@ -178,9 +181,13 @@ class AdvancedTTSEngine:
                 if not self._is_playing:
                     break
 
-                while self._is_paused:
-                    if not self._is_playing:
-                        break
+                # Blocking pause: wait on the event instead of busy-waiting on CPU.
+                # The loop re-checks stop conditions after each wake-up.
+                while self._is_paused and self._is_playing:
+                    self._resume_event.wait(timeout=0.1)
+
+                if not self._is_playing:
+                    break
 
                 if paragraph.strip():
                     engine.say(paragraph)
@@ -208,12 +215,14 @@ class AdvancedTTSEngine:
     def pause(self):
         """Pause playback."""
         self._is_paused = True
+        self._resume_event.clear()
         if self._on_state_change:
             self._on_state_change("paused")
 
     def resume(self):
         """Resume playback."""
         self._is_paused = False
+        self._resume_event.set()
         if self._on_state_change:
             self._on_state_change("playing")
 
@@ -221,6 +230,7 @@ class AdvancedTTSEngine:
         """Stop playback."""
         self._is_playing = False
         self._is_paused = False
+        self._resume_event.set()
         if self._on_state_change:
             self._on_state_change("stopped")
 

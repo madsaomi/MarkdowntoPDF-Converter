@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang | default('en') }}">
 <head>
     <meta charset="UTF-8">
     <title>{{ meta.title | e if meta.title else "Document" }}</title>

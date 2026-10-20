@@ -15,16 +15,17 @@ logger = logging.getLogger("MarkdownToPDF.threads")
 # ──────────────────────── Kroki.io Network Checker ────────────────────────
 
 class KrokiCheckThread(QThread):
-    finished = pyqtSignal(bool)
+    # NOTE: not named "finished" — that would shadow QThread.finished (no-arg built-in signal).
+    checked = pyqtSignal(bool)
 
     def run(self):
         import urllib.request
         try:
             req = urllib.request.Request("https://kroki.io", method="HEAD")
             with urllib.request.urlopen(req, timeout=1.5):
-                self.finished.emit(True)
+                self.checked.emit(True)
         except Exception:
-            self.finished.emit(False)
+            self.checked.emit(False)
 
 
 # ──────────────────────── Conversion thread ────────────────────────
@@ -86,6 +87,10 @@ class ConversionThread(QThread):
 
                 doc_theme_file = 'theme_presentation.css' if opt.is_presentation else opt.doc_theme
 
+                # Optional suffix appended to the single "saved" log line (e.g. "(12 slides)").
+                # Emitted once at the end of the loop body to avoid duplicate "saved" messages.
+                saved_suffix = ""
+
                 if opt.export_format == ExportFormat.DOCX:
                     renderer = DOCXRenderer()
                     renderer.render(html_content, metadata, output_file, reference_docx=opt.docx_template, lang=self.lang)
@@ -97,11 +102,11 @@ class ConversionThread(QThread):
                     from src.core.pptx_renderer import PPTXRenderer
                     renderer = PPTXRenderer()
                     count = renderer.render(html_content, metadata, output_file, lang=self.lang)
-                    self.log.emit(t("log_saved", f"{output_file} ({count} slides)"))
+                    saved_suffix = f" ({count} slides)"
                 elif opt.export_format == ExportFormat.REVEAL:
                     from src.core.reveal_exporter import export_reveal_js
                     count = export_reveal_js(html_content, metadata, output_file, lang=self.lang)
-                    self.log.emit(t("log_saved", f"{output_file} ({count} slides)"))
+                    saved_suffix = f" ({count} slides)"
                 elif opt.export_format in (ExportFormat.PNG, ExportFormat.JPG):
                     from src.core.image_renderer import ImageRenderer
                     renderer = ImageRenderer(self.wp_executable)
@@ -113,7 +118,7 @@ class ConversionThread(QThread):
                         image_format=fmt,
                         cancel_flag=self.is_cancelled
                     )
-                    self.log.emit(t("log_saved", f"{output_file} ({count} pages)"))
+                    saved_suffix = f" ({count} pages)"
                 elif opt.export_format == ExportFormat.HTML:
                     # HTML export: render through Jinja2 template but save as .html
                     renderer = PDFRenderer(self.template_dir, self.wp_executable)
@@ -148,7 +153,7 @@ class ConversionThread(QThread):
                             self.log.emit(t("log_pdf_encrypt_error", "Encryption failed"))
                             logger.error("Failed to encrypt PDF %s", output_file)
 
-                self.log.emit(t("log_saved", output_file))
+                self.log.emit(t("log_saved", f"{output_file}{saved_suffix}"))
                 self.finished_one.emit(True, output_file)
                 logger.info("Converted: %s -> %s", input_file, output_file)
             except Exception as e:

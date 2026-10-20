@@ -88,6 +88,7 @@ class PDFRenderer:
             page_num_format=page_num_format,
             tr_page=tr_page,
             tr_of=tr_of,
+            lang=lang,
             watermark_css=watermark_css,
         )
         return rendered_html

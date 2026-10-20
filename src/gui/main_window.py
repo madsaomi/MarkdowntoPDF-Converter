@@ -92,7 +92,7 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
 
         # Start Kroki.io connectivity check
         self.kroki_thread = KrokiCheckThread()
-        self.kroki_thread.finished.connect(self.on_kroki_check_finished)
+        self.kroki_thread.checked.connect(self.on_kroki_check_finished)
         self.kroki_thread.start()
 
         # File watcher for auto-regenerate mode
