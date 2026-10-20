@@ -191,14 +191,26 @@ def test_old_module_removed():
 
 
 def test_consumers_still_import_package():
-    """Потребители по-прежнему импортируют имена из src.gui.dialogs."""
+    """Хотя бы одни потребители по-прежнему импортируют имена из src.gui.dialogs.
+
+    Раньше список был жёстко задан, но после TASK-012 ленивые импорты
+    переехали в миксины, поэтому проверяем весь каталог src/gui.
+    """
     total = 0
-    for path in CONSUMERS:
-        src = _read(path)
-        assert "from src.gui.dialogs import" in src, \
-            f"{os.path.basename(path)} больше не импортирует из src.gui.dialogs"
-        total += src.count("from src.gui.dialogs import")
-    print(f"[PASS] test_consumers_still_import_package ({total} импортов в потребителях)")
+    importers = []
+    for root, _dirs, files in os.walk(GUI):
+        if "__pycache__" in root:
+            continue
+        for fn in sorted(files):
+            if not fn.endswith(".py"):
+                continue
+            src = _read(os.path.join(root, fn))
+            n = src.count("from src.gui.dialogs import")
+            if n:
+                total += n
+                importers.append(os.path.relpath(os.path.join(root, fn), GUI))
+    assert total > 0, "Ни один модуль src/gui не импортирует из src.gui.dialogs"
+    print(f"[PASS] test_consumers_still_import_package ({total} импортов в {len(importers)} файлах)")
 
 
 def test_facade_importable_under_stub():

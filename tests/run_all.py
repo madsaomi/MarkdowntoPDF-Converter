@@ -35,6 +35,7 @@ test_files = [
     "test_release_config.py",
     "test_decomposition_010.py",
     "test_dialogs_package_011.py",
+    "test_decomposition_012.py",
 ]
 
 passed = 0
