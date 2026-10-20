@@ -3,7 +3,7 @@
 **Проект:** Markdown to PDF Converter Pro  
 **Описание:** Десктопное приложение для конвертации Markdown в PDF, DOCX, HTML, EPUB, PPTX, PNG/JPG с live-превью и CLI-режимом  
 **Технологический стек:** Python 3.10+, PyQt6, WeasyPrint (CLI), python-markdown, Jinja2, Pygments, pypdf, python-docx, ebooklib, python-pptx, PyMuPDF  
-**Последнее обновление:** 2026-10-20 22:20  
+**Последнее обновление:** 2026-10-20 23:10  
 **Ответственный агент:** Big Pickle (OpenCode)  
 **Текущая фаза:** Зрелый продукт (v-release) → Стабилизация по итогам полного аудита  
 
@@ -15,9 +15,9 @@
 |---|---|---|
 | **Экосистема «Второго Мозга» (`agents/`)** | 🟢 Готово | Внедрена и инициализирована 2026-10-20; integrity-check: 0 ошибок |
 | **Ядро конвертации (`src/core/`)** | 🟡 Работает | 30 модулей; PDF-рендер: резолвер exe → pip-fallback (TASK-002 ✅); `watermark_css` проброшен в шаблон (TASK-004 ✅); движок локально не установлен |
-| **GUI (`src/gui/`, PyQt6)** | 🟡 Работает | ~35 инструментов, 17 диалогов, i18n RU/EN; критические баги устранены (TASK-001 ✅), мёртвый код вычищен (TASK-003 ✅), рабочие AI/Productivity-инструменты подключены к меню, мёртвый декор удалён (TASK-008 ✅), God-object `MainWindow` декомпозирован в 5 миксинов (TASK-010 ✅) |
+| **GUI (`src/gui/`, PyQt6)** | 🟡 Работает | ~35 инструментов, 17 диалогов, i18n RU/EN; критические баги устранены (TASK-001 ✅), мёртвый код вычищен (TASK-003 ✅), рабочие AI/Productivity-инструменты подключены к меню, мёртвый декор удалён (TASK-008 ✅), God-object `MainWindow` декомпозирован в 5 миксинов (TASK-010 ✅), `dialogs.py` разбит на пакет `src/gui/dialogs/` (TASK-011 ✅) |
 | **CLI-режим (headless)** | 🟢 Готово | Работает без PyQt6; все форматы, шифрование, нумерация страниц |
-| **Тестирование и QA** | 🟢 Хорошо | **23/23** тестовых файлов зелёные; покрыты рендереры (контракты), Reveal/multi-export/plugin_system/github_sync/pdf_encrypt, GUI-smoke, синхронизация зависимостей, мелкие фиксы ядра, wiring заглушек, конфиг релиза, декомпозиция GUI |
+| **Тестирование и QA** | 🟢 Хорошо | **24/24** тестовых файлов зелёные; покрыты рендереры (контракты), Reveal/multi-export/plugin_system/github_sync/pdf_encrypt, GUI-smoke, синхронизация зависимостей, мелкие фиксы ядра, wiring заглушек, конфиг релиза, декомпозиция GUI (миксины + пакет диалогов) |
 | **Релиз (M4)** | 🟢 Готово | Релизный workflow по тегу `v*` (тесты → `.exe` → инсталлятор → GitHub Release), локальный `scripts/build_release.ps1`, README актуализирован (TASK-009 ✅) |
 | **Зависимости и окружение** | 🟢 Готово | `requirements.txt` ↔ `pyproject.toml` синхронизированы (TASK-006 ✅); тест сверки + «используется в коде → объявлено» |
 | **CI/CD** | 🟡 Частично | Один workflow (pytest на Ubuntu 3.10–3.13); сборки .exe и инсталлятора в CI нет |
@@ -30,7 +30,7 @@
 ## 🎯 Что делается прямо сейчас (Текущий фокус):
 - ✅ **TASK-008** — 6 рабочих AI/Productivity-инструментов подключены к меню Tools, мёртвый декор (`splash_screen`/`custom_titlebar`/`ambient_glow`) удалён (2026-10-20, коммит `c26c383`, план: [`plan_008_feature_stubs.md`](file:///agents/plans/plan_008_feature_stubs.md))
 - ✅ **TASK-009 (M4 «Релиз»)** — релизный workflow по тегу `v*` (тесты → `.exe` → инсталлятор Inno Setup → GitHub Release), локальный `scripts/build_release.ps1`, README актуализирован, тест `tests/test_release_config.py` (2026-10-20, коммит `2b3566d`, план: [`plan_009_release_milestone.md`](file:///agents/plans/plan_009_release_milestone.md))
-- 🎉 **Бэклог задач (TASK-001…009) и веха M4 закрыты.** Начата **TASK-010 (декомпозиция God-objects)**: `MainWindow` разбит на 5 миксинов (74 → 47 методов). Осталось: `dialogs.py` (1534 строки) и `ToolMethodsMixin` (68 методов), плюс «Идеи на будущее».
+- 🎉 **Бэклог задач (TASK-001…009) и веха M4 закрыты.** Идёт **декомпозиция God-objects**: TASK-010 — `MainWindow` разбит на 5 миксинов (74 → 47 методов); TASK-011 — `dialogs.py` (1534 строки, 17 классов) разбит на пакет `src/gui/dialogs/`. Осталось: `ToolMethodsMixin` (68 методов), [BUG_003](file:///agents/bugs_and_fixes/BUG_003_readability_missing_import.md), плюс «Идеи на будущее».
 
 ---
 

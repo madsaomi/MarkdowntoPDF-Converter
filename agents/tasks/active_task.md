@@ -3,16 +3,16 @@
 **Статус:** ⚪ IDLE  
 **Дата обновления:** 2026-10-20  
 **Исполнитель:** Big Pickle (OpenCode)  
-**Последняя завершённая задача:** TASK-010 — Декомпозиция God-object `MainWindow`  
+**Последняя завершённая задача:** TASK-011 — Разбиение `dialogs.py` на пакет `src/gui/dialogs/`  
 
 ---
 
 ## 🎯 Цель (следующий кандидат)
 
-**Основной бэклог (TASK-001…010) и веха M4 закрыты.** Дальше — продолжение декомпозиции и «Идеи на будущее» из [`backlog.md`](file:///agents/tasks/backlog.md):
+**Основной бэклог (TASK-001…011) и веха M4 закрыты.** Дальше — продолжение декомпозиции и «Идеи на будущее» из [`backlog.md`](file:///agents/tasks/backlog.md):
 
-- **Разбить `dialogs.py` (1534 строки)** на пакет `src/gui/dialogs/` — тем же приёмом (вербатим-перенос + регресс-тест);
-- **разделить `ToolMethodsMixin`** (68 методов, 730 строк) по темам;
+- **разделить `ToolMethodsMixin`** (68 методов, 730 строк) по темам — тем же приёмом (вербатим-перенос + регресс-тест);
+- починить [BUG_003](file:///agents/bugs_and_fixes/BUG_003_readability_missing_import.md) (`estimate_readability` без импорта);
 - офлайн-замена внешних сервисов (LaTeX/CodeCogs, диаграммы/Kroki);
 - фоновые потоки для OCR, PDF→MD, GitHub sync, распознавания речи;
 - единый рендер-путь превью и экспорта; честная маркировка декоративных фич.
@@ -33,11 +33,12 @@
 - ✅ **TASK-008 (судьба фичевых заглушек)** — коммит `c26c383`. Отчёт: [`session_2026-10-20_08_big_pickle.md`](file:///agents/history/session_2026-10-20_08_big_pickle.md).
 - ✅ **TASK-009 (M4 «Релиз»)** — коммит `2b3566d`. Отчёт: [`session_2026-10-20_09_big_pickle.md`](file:///agents/history/session_2026-10-20_09_big_pickle.md).
 - ✅ **TASK-010 (декомпозиция God-object MainWindow)** — коммит `d95c394`. Отчёт: [`session_2026-10-20_10_big_pickle.md`](file:///agents/history/session_2026-10-20_10_big_pickle.md).
+- ✅ **TASK-011 (разбиение `dialogs.py` на пакет)** — коммиты `7b00c6c` + `8e929c6`. Отчёт: [`session_2026-10-20_11_big_pickle.md`](file:///agents/history/session_2026-10-20_11_big_pickle.md).
 
 ---
 
 ## 🧪 Состояние верификации
 
-- Тесты: **23/23** тестовых файлов зелёные (`python tests/run_all.py`).
+- Тесты: **24/24** тестовых файлов зелёные (`python tests/run_all.py`).
 - Integrity-check «Второго Мозга»: 0 ошибок.
-- **Бэклог TASK-001…010 и веха M4 закрыты.**
+- **Бэклог TASK-001…011 и веха M4 закрыты.**
