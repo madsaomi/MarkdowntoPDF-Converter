@@ -21,19 +21,48 @@ class AiToolsMixin:
 
     def start_voice_input(self):
         try:
-            import speech_recognition as sr
-            recognizer = sr.Recognizer()
-            with sr.Microphone() as source:
-                self.append_log("🎤 Слушаю...")
-                QApplication.processEvents()
-                audio = recognizer.listen(source, timeout=10)
-                text = recognizer.recognize_google(audio, language='ru-RU')
-                cursor = self.live_editor.textCursor()
-                cursor.insertText(text)
-        except ImportError:
-            QMessageBox.information(self, "Voice", "Установите: pip install SpeechRecognition pyaudio")
-        except Exception as e:
-            self.append_log(f"🎤 Ошибка: {e}")
+            from src.gui.workers.task_worker import TaskThread
+
+            def _task():
+                import speech_recognition as sr
+                recognizer = sr.Recognizer()
+                with sr.Microphone() as source:
+                    audio = recognizer.listen(source, timeout=10)
+                    return recognizer.recognize_google(audio, language='ru-RU')
+
+            self.append_log("🎤 Слушаю (фоновый)...")
+
+            def _on_finish(text):
+                try:
+                    if text:
+                        cursor = self.live_editor.textCursor()
+                        cursor.insertText(text)
+                    self.append_log("🎤 Готово")
+                except Exception as e:
+                    self.append_log(f"🎤 Ошибка: {e}")
+
+            def _on_error(e):
+                if "Microphone" in str(e) or "No module" in str(e):
+                    QMessageBox.information(self, "Voice", "Установите: pip install SpeechRecognition pyaudio")
+                    return
+                self.append_log(f"🎤 Ошибка: {e}")
+
+            TaskThread(_task).start(on_finish=_on_finish, on_error=_on_error, parent=self)
+        except Exception:
+            try:
+                import speech_recognition as sr
+                recognizer = sr.Recognizer()
+                with sr.Microphone() as source:
+                    self.append_log("🎤 Слушаю...")
+                    QApplication.processEvents()
+                    audio = recognizer.listen(source, timeout=10)
+                    text = recognizer.recognize_google(audio, language='ru-RU')
+                    cursor = self.live_editor.textCursor()
+                    cursor.insertText(text)
+            except ImportError:
+                QMessageBox.information(self, "Voice", "Установите: pip install SpeechRecognition pyaudio")
+            except Exception as e:
+                self.append_log(f"🎤 Ошибка: {e}")
 
     def ai_improve_text(self):
         cursor = self.live_editor.textCursor()
