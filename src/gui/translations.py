@@ -107,6 +107,8 @@ TRANSLATIONS = {
 
         "menu_language": "🌐 Язык",
 
+        "menu_help": "❓ Справка",
+
         "menu_recent": "🕐 Последние файлы",
 
         "menu_tools": "🛠️ Инструменты",
@@ -337,6 +339,8 @@ TRANSLATIONS = {
         "menu_format": "✨ Smart Formatting",
 
         "menu_language": "🌐 Language",
+
+        "menu_help": "❓ Help",
 
         "menu_recent": "🕐 Recent Files",
 

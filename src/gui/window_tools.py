@@ -93,9 +93,12 @@ class ToolMethodsMixin:
         from src.gui.watermark_designer import WatermarkDesignerDialog
         dlg = WatermarkDesignerDialog(self, self.current_lang)
         if dlg.exec():
-            css = dlg.result_css
+            # Текст — в поле «Watermark», сгенерированный CSS — в скрытый носитель,
+            # который передаётся в рендерер (иначе стили дизайнера терялись).
             self.footer_input.setText(dlg.text_input.text())
-            self.append_log("Watermark applied to footer")
+            if hasattr(self, 'watermark_css_input'):
+                self.watermark_css_input.setText(dlg.result_css.strip())
+            self.append_log("Watermark applied (text + custom styles)")
 
     def show_citation_manager(self):
         from src.gui.dialogs import CitationManagerDialog
@@ -240,21 +243,24 @@ class ToolMethodsMixin:
         self.update_preview_from_editor()
 
     def toggle_split_view(self):
+        """Переключение режимов editor/preview.
+
+        Сплиттер содержит ровно 2 виджета (editor_container, preview_output),
+        поэтому «скрытие» делается через setVisible — иначе setSizes игнорируется Qt.
+        """
         modes = ['both', 'editor', 'preview']
         current = getattr(self, '_split_view_mode', 'both')
         idx = (modes.index(current) + 1) % len(modes)
         self._split_view_mode = modes[idx]
 
         if self._split_view_mode == 'both':
-            self.editor_splitter.setSizes([200, 400, 400])
             self.preview_output.show()
             self.live_editor.show()
+            self.editor_splitter.setSizes([500, 500])
         elif self._split_view_mode == 'editor':
-            self.editor_splitter.setSizes([1, 600, 0])
             self.preview_output.hide()
             self.live_editor.show()
         else:
-            self.editor_splitter.setSizes([0, 0, 600])
             self.preview_output.show()
             self.live_editor.hide()
 

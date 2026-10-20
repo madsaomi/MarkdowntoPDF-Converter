@@ -258,7 +258,48 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
         self.settings.setValue("presentation_mode", self.chk_presentation_mode.isChecked())
 
     def closeEvent(self, event):
-        self.save_settings()
+        """Корректное завершение: сохранить состояние и остановить фоновые потоки/таймеры."""
+        try:
+            self.save_settings()
+        except Exception as e:
+            logger.warning("Failed to save settings on close: %s", e)
+
+        # 1. Таймеры
+        for timer_attr in ('autosave_timer', 'preview_timer'):
+            timer = getattr(self, timer_attr, None)
+            if timer is not None:
+                try:
+                    timer.stop()
+                except Exception:
+                    pass
+
+        # 2. Автосохранение черновика (один раз на выходе)
+        try:
+            self.autosave_draft()
+        except Exception as e:
+            logger.warning("Draft autosave on close failed: %s", e)
+
+        # 3. Watcher
+        watcher = getattr(self, 'watcher', None)
+        if watcher is not None:
+            try:
+                watcher.removePaths(watcher.files())
+            except Exception:
+                pass
+
+        # 4. Фоновые потоки: попросить отмену и дождаться завершения
+        thread = getattr(self, 'thread', None)
+        if thread is not None and thread.isRunning():
+            try:
+                thread.cancel()
+            except Exception:
+                pass
+            thread.wait(3000)
+
+        kroki_thread = getattr(self, 'kroki_thread', None)
+        if kroki_thread is not None and kroki_thread.isRunning():
+            kroki_thread.wait(2000)
+
         super().closeEvent(event)
 
     # ─── Recent files ───
@@ -554,6 +595,7 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
             page_num_format=self.combo_page_format.currentData() or "simple",
             is_presentation=self.chk_presentation_mode.isChecked(),
             compress=self.chk_compress.isChecked(),
+            watermark_css=self.watermark_css_input.text().strip() if hasattr(self, 'watermark_css_input') else "",
         )
 
 
@@ -733,14 +775,23 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
         
         self.setWindowTitle(f"{t('title')} v{__version__}")
         
-        # Menu Bar
+        # Menu Bar (перевод + локализация названий пунктов меню)
         try:
             menubar = self.menuBar()
-            menubar.actions()[0].setText(t('menu_file'))
+            menus = [
+                ('file_menu', 'menu_file', 'File'),
+                ('tools_menu', 'menu_tools', 'Tools'),
+                ('lang_menu', 'menu_language', 'Language'),
+                ('help_menu', 'menu_help', 'Help'),
+            ]
+            for attr, key, fallback in menus:
+                if hasattr(self, attr):
+                    getattr(self, attr).setTitle(t(key) if key in TRANSLATIONS.get(self.current_lang, {}) else fallback)
+            # Файловое меню — первый пункт меню-бара (обратная совместимость)
+            if menubar.actions():
+                menubar.actions()[0].setText(t('menu_file'))
             if hasattr(self, 'recent_menu') and self.recent_menu:
                 self.recent_menu.setTitle(t('menu_recent'))
-            if hasattr(self, 'lang_menu'):
-                self.lang_menu.setTitle(t('menu_language'))
         except Exception as e:
             logger.warning("Menu retranslation failed: %s", e)
         

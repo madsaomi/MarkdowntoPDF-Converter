@@ -33,7 +33,7 @@ class PDFRenderer:
                     paper_size: str = 'A4', watermark: str = '', footer_text: str = '',
                     input_filepath: str = None, custom_css_path: str = '', margins: str = '',
                     page_numbers: bool = False, page_num_format: str = 'simple', lang: str = 'ru',
-                    word_count: int = 0) -> str:
+                    word_count: int = 0, watermark_css: str = '') -> str:
         """
         Renders the final HTML string from Markdown HTML content + Jinja2 template.
         This is reused by both PDF rendering and HTML export.
@@ -88,6 +88,7 @@ class PDFRenderer:
             page_num_format=page_num_format,
             tr_page=tr_page,
             tr_of=tr_of,
+            watermark_css=watermark_css,
         )
         return rendered_html
 
@@ -96,7 +97,8 @@ class PDFRenderer:
                paper_size: str = 'A4', watermark: str = '', footer_text: str = '',
                input_filepath: str = None, custom_css_path: str = '', margins: str = '',
                page_numbers: bool = False, page_num_format: str = 'simple', lang: str = 'ru',
-               cancel_flag: callable = None, compress: bool = False, word_count: int = 0):
+               cancel_flag: callable = None, compress: bool = False, word_count: int = 0,
+               watermark_css: str = ''):
         """
         Takes raw HTML content (from Markdown), injects it into the base template,
         and renders it to a PDF using WeasyPrint.
@@ -104,7 +106,7 @@ class PDFRenderer:
         rendered_html = self.render_html(
             html_content, metadata, doc_theme, code_theme,
             paper_size, watermark, footer_text, input_filepath, custom_css_path, margins,
-            page_numbers, page_num_format, lang, word_count
+            page_numbers, page_num_format, lang, word_count, watermark_css
         )
 
         # Determine base URL for relative resources

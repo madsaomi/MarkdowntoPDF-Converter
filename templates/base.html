@@ -105,8 +105,12 @@
         }
         {% endif %}
     </style>
-</head>
-<body>
+    {% if watermark_css %}
+    <style>
+{{ watermark_css }}
+    </style>
+    {% endif %}
+</head><body>
     {% if watermark %}
     <div class="watermark">{{ watermark | e }}</div>
     {% endif %}

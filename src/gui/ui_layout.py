@@ -13,12 +13,14 @@ def setup_ui(window):
 
     # ── File Menu ──
     file_menu = menubar.addMenu("File")
+    window.file_menu = file_menu
     window.recent_menu = QMenu("Recent", window)
     file_menu.addMenu(window.recent_menu)
     file_menu.addAction("Save as .md", window.export_as_markdown)
 
     # ── Tools Menu ──
     tools = menubar.addMenu("Tools")
+    window.tools_menu = tools
     _a = lambda text, slot, shortcut=None: tools.addAction(text, slot, shortcut) if shortcut else tools.addAction(text, slot)
     _a("Export Selection", window.export_selection)
     _a("Export History", window.show_conversion_history)
@@ -67,13 +69,13 @@ def setup_ui(window):
     _a("Spell Check", window.run_spell_check)
 
     # ── Language & Help ──
-    lang_menu = menubar.addMenu("Language")
-    lang_menu.addAction("Русский", lambda: window.change_lang("ru"))
-    lang_menu.addAction("English", lambda: window.change_lang("en"))
+    window.lang_menu = menubar.addMenu("Language")
+    window.lang_menu.addAction("Русский", lambda: window.change_lang("ru"))
+    window.lang_menu.addAction("English", lambda: window.change_lang("en"))
 
-    help_menu = menubar.addMenu("Help")
-    help_menu.addAction("About", window.show_about)
-    help_menu.addAction("Welcome Tour", window.show_welcome_tour)
+    window.help_menu = menubar.addMenu("Help")
+    window.help_menu.addAction("About", window.show_about)
+    window.help_menu.addAction("Welcome Tour", window.show_welcome_tour)
 
     # ── Central Layout ──
     central = QWidget()
@@ -463,6 +465,10 @@ def _setup_settings_dialog(window):
     window.watermark_input = QLineEdit()
     window.watermark_input.setPlaceholderText("e.g. Draft")
     form_sec.addRow("Watermark:", window.watermark_input)
+
+    # Скрытый носитель CSS, сгенерированного Watermark Designer (стили watermark)
+    window.watermark_css_input = QLineEdit()
+    window.watermark_css_input.setVisible(False)
 
     window.footer_input = QLineEdit()
     window.footer_input.setPlaceholderText("{date} {filename} {title}")

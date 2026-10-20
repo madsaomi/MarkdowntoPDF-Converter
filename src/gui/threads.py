@@ -122,7 +122,8 @@ class ConversionThread(QThread):
                         doc_theme_file, opt.code_theme,
                         opt.paper_size, opt.watermark, opt.footer_text,
                         input_file, opt.custom_css, opt.margins,
-                        page_numbers=opt.page_numbers, page_num_format=opt.page_num_format, lang=self.lang
+                        page_numbers=opt.page_numbers, page_num_format=opt.page_num_format, lang=self.lang,
+                        watermark_css=opt.watermark_css
                     )
                     with open(output_file, 'w', encoding='utf-8') as f:
                         f.write(rendered_html)
@@ -136,7 +137,8 @@ class ConversionThread(QThread):
                         input_file, opt.custom_css, opt.margins,
                         page_numbers=opt.page_numbers, page_num_format=opt.page_num_format, lang=self.lang,
                         cancel_flag=self.is_cancelled,
-                        compress=opt.compress, word_count=word_count
+                        compress=opt.compress, word_count=word_count,
+                        watermark_css=opt.watermark_css
                     )
                     
                     if opt.pdf_password and opt.export_format == ExportFormat.PDF:

@@ -7,6 +7,56 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 
 
+def build_watermark_css(text: str, color_rgb: tuple, opacity: float,
+                        size: int, angle: int, diagonal: bool = True,
+                        tiled: bool = False) -> str:
+    """Собирает CSS-фрагмент для класса .watermark (без пользовательского HTML).
+
+    Возвращается только CSS — он вставляется в <style> base.html, поэтому
+    произвольный текст/разметка пользователя не могут попасть в документ.
+    """
+    r, g, b = color_rgb
+    safe_text = (text or "").replace("\\", "").replace('"', "'").replace("<", "").replace(">", "")
+    opacity = max(0.0, min(1.0, float(opacity)))
+    if not tiled:
+        rule = (
+            "    position: fixed;\n"
+            "    top: 40%;\n"
+            "    left: 5%;\n"
+            f"    font-size: {int(size)}pt;\n"
+            f"    color: rgba({r}, {g}, {b}, {opacity:g});\n"
+            f"    transform: rotate({int(angle)}deg);\n"
+            "    z-index: 9999;\n"
+            "    font-weight: bold;\n"
+            "    white-space: nowrap;\n"
+            "    pointer-events: none;\n"
+            "    user-select: none;\n"
+            f'    content: "{safe_text}";\n'
+        )
+    else:
+        rule = (
+            "    position: fixed;\n"
+            "    top: 0;\n"
+            "    left: 0;\n"
+            "    width: 100%;\n"
+            "    height: 100%;\n"
+            "    z-index: 9999;\n"
+            "    pointer-events: none;\n"
+            "    user-select: none;\n"
+            f"    font-size: {int(size)}pt;\n"
+            f"    color: rgba({r}, {g}, {b}, {opacity:g});\n"
+            f"    transform: rotate({int(angle)}deg);\n"
+            "    font-weight: bold;\n"
+            "    white-space: pre-wrap;\n"
+            "    word-break: break-word;\n"
+            "    line-height: 3;\n"
+            f'    content: "{safe_text} {safe_text} {safe_text} {safe_text} {safe_text}";\n'
+        )
+    if diagonal:
+        rule += "    transform-origin: center;\n"
+    return ".watermark {\n" + rule + "}\n"
+
+
 class WatermarkDesignerDialog(QDialog):
     """Visual watermark designer with preview."""
 
@@ -95,24 +145,31 @@ class WatermarkDesignerDialog(QDialog):
         opacity = self.opacity_slider.value() / 100
         size = self.font_size_spin.value()
         angle = self.angle_spin.value()
-        r, g, b = self._color.red(), self._color.green(), self._color.blue()
 
-        self.result_css = f"""
-        <div class="watermark" style="
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) rotate({angle}deg);
-            font-size: {size}px; color: rgba({r},{g},{b},{opacity});
-            font-weight: bold; white-space: nowrap; pointer-events: none;
-            z-index: 9999; user-select: none;
-        ">{text}</div>
-        """
+        self.result_css = build_watermark_css(
+            text,
+            (self._color.red(), self._color.green(), self._color.blue()),
+            opacity, size, angle,
+            diagonal=self.chk_diagonal.isChecked(),
+            tiled=self.chk_tiled.isChecked(),
+        )
 
-        html = f"""<html><body style="position:relative; min-height:150px; background:#f8f9fa; padding:20px; border-radius:8px;">
-        {self.result_css}
+        html = f"""<html><head><style>
+        body {{ margin: 0; position: relative; min-height: 150px; background: #f8f9fa;
+                padding: 20px; border-radius: 8px; overflow: hidden; }}
+        .watermark {{ {self._preview_position()} }}
+        </style></head><body>
         <p style="color:#2c3e50; font-size:14px;">Sample document content goes here. The watermark will appear diagonally across the page.</p>
         <p style="color:#7f8c8d; font-size:12px;">More text to demonstrate the watermark effect...</p>
         </body></html>"""
         self.preview.setHtml(html)
+
+    def _preview_position(self) -> str:
+        """Позиционирование превью: контент .watermark берётся из ::before для предсказуемости."""
+        css = self.result_css.strip()
+        if css.startswith(".watermark {"):
+            css = css[len(".watermark {"):].rstrip().rstrip("}")
+        return css.strip()
 
     def _apply(self):
         self._update_preview()

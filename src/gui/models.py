@@ -35,3 +35,4 @@ class ConversionOptions:
     page_num_format: str = "simple"
     is_presentation: bool = False
     compress: bool = False
+    watermark_css: str = ""
