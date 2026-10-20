@@ -8,7 +8,7 @@
 
 ## ⚡ 1. Сейчас (Now — Текущий фокус)
 - [x] **TASK-001 (✅ 2026-10-20):** Устранение критических багов — см. [plan_001_fix_critical_bugs.md](file:///agents/plans/plan_001_fix_critical_bugs.md), [BUG_001](file:///agents/bugs_and_fixes/BUG_001_critical_gui_pptx_bugs.md).
-- [ ] **TASK-002:** Решение по PDF-движку: зафиксировать поставку `weasyprint.exe` (бандлинг в репо / скачивание при сборке / переход на pip-WeasyPrint).
+- [x] **TASK-002 (✅ 2026-10-20):** PDF-движок: резолвер exe → pip-fallback — см. [plan_002_weasyprint_engine_resolver.md](file:///agents/plans/plan_002_weasyprint_engine_resolver.md).
 
 ---
 

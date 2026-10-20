@@ -17,7 +17,7 @@
   - `pptx_renderer.py:77` — `IndexError` при контенте до первого заголовка → **FIXED** (+ регрессионный тест `tests/test_pptx_parser.py`).
   - `image_renderer.py:45,108-116` — утечка temp-логфайла WeasyPrint → **FIXED** (+ защита `temp_pdf_path` в finally).
   - Детали: [`BUG_001`](file:///agents/bugs_and_fixes/BUG_001_critical_gui_pptx_bugs.md), [`PLAN-001`](file:///agents/plans/plan_001_fix_critical_bugs.md).
-- [ ] **TASK-002:** Решить проблему движка PDF: `weasyprint-windows/dist/weasyprint.exe` отсутствует в репозитории, pip-пакет `WeasyPrint==61.2` нигде не импортируется. Без внешнего бинарника рендер PDF невозможен, сборка на чистом клоне падает (`build.py:43`, `renderer.py:118`).
+- [x] **TASK-002 (✅ 2026-10-20, коммит `ffcbbe6`):** Решение по PDF-движку: резолвер `AppConfig.resolve_weasyprint_cmd()` (exe → pip `weasyprint` → понятная ошибка), `build.py` не падает без движка (+`--skip-pdf-engine`), добавлен `setup_pdf_engine.ps1`. См. [`PLAN-002`](file:///agents/plans/plan_002_weasyprint_engine_resolver.md).
 
 ### 📌 Средний приоритет (Medium)
 - [ ] **TASK-003:** Чистка мёртвого и дублирующегося кода GUI: неиспользуемые импорты `main_window.py`, дубли методов MainWindow ↔ ToolMethodsMixin (6 пар), неиспользуемый `Translator`, неинстанцируемый `ModernSplashScreen`, закомментированные `CustomTitleBar`/`AmbientGlowWidget`.
