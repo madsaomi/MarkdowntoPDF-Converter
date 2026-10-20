@@ -67,6 +67,14 @@ def setup_ui(window):
     _a("Typewriter Mode", window.toggle_typewriter_mode)
     _a("Focus Mode", window.toggle_focus_mode)
     _a("Spell Check", window.run_spell_check)
+    tools.addSeparator()
+    # ── AI & Productivity (local, no network/ML) ──
+    _a("AI Writing Assistant", window.show_ai_assistant)
+    _a("AI Improve Selection", window.ai_improve_text)
+    _a("Generate Outline", window.ai_generate_outline)
+    _a("Task Board (Kanban)", window.export_task_board)
+    _a("API Docs from .py", window.generate_api_docs)
+    _a("Voice Input (mic)", window.start_voice_input)
 
     # ── Language & Help ──
     window.lang_menu = menubar.addMenu("Language")

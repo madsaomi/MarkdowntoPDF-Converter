@@ -50,8 +50,6 @@ from src.core.template_vars import process_document_vars
 from src.core.plugin_system import load_plugins_from_dir
 from src.gui.toast import ToastNotification
 from src.gui.about_dialog import AboutDialog
-from src.gui.custom_titlebar import CustomTitleBar
-from src.gui.ambient_glow import AmbientGlowWidget
 from src.gui.window_tools import ToolMethodsMixin
 
 # ──────────────────────── Dark / Light stylesheets ────────────────────────
@@ -108,9 +106,6 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
 
         setup_ui(self)
 
-        # Custom title bar (optional - uncomment to enable)
-        # self._setup_custom_titlebar()
-
         # Status bar
         self.statusBar().setStyleSheet("""
             QStatusBar {
@@ -122,9 +117,6 @@ class MainWindow(QMainWindow, ToolMethodsMixin):
             }
         """)
         self.statusBar().showMessage("Ready")
-
-        # Ambient glow (optional - uncomment to enable)
-        # self._setup_ambient_glow()
 
         # Connect Page Numbering toggled state
         self.combo_page_format.setEnabled(self.chk_page_numbers.isChecked())
