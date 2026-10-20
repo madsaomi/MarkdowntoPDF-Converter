@@ -1,7 +1,7 @@
 # 🐛 Баг: `ReadabilityDashboardDialog` использует `estimate_readability` без импорта
 
 **Дата:** 2026-10-20  
-**Статус:** 🟡 OPEN (обнаружен попутно при [TASK-011](file:///agents/plans/plan_011_split_dialogs.md)/[PLAN-011](file:///agents/plans/plan_011_split_dialogs.md))  
+**Статус:** ✅ FIXED (фиксирован в коммите 8786124) (обнаружен попутно при [TASK-011](file:///agents/plans/plan_011_split_dialogs.md)/[PLAN-011](file:///agents/plans/plan_011_split_dialogs.md))  
 **Затронутые модули:** `src/gui/dialogs/analysis.py` (ранее — `src/gui/dialogs.py`)
 
 ---
