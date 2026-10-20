@@ -1,31 +1,30 @@
-# 📋 Активная задача: TASK-005 — Расширение тестового покрытия ядра
+# 📋 Активная задача: нет активной задачи
 
-**Статус:** 🔵 IN_PROGRESS  
+**Статус:** 🟢 IDLE (Ожидание)  
 **Дата создания:** 2026-10-20  
-**Исполнитель:** Big Pickle (OpenCode)  
-**Приоритет:** MEDIUM  
-**Связанный план:** [PLAN-005](file:///agents/plans/plan_005_test_coverage.md)  
+**Дата завершения последней задачи:** 2026-10-20  
+**Исполнитель:** —  
+**Приоритет:** —  
 
 ---
 
-## 🎯 Цель задачи
-Покрыть тестами непокрытые модули `src/core/` (рендереры DOCX/EPUB/PPTX/Reveal/Multi-export, plugin_system,
-github_sync, pdf_encrypt, ocr_engine) и добавить GUI-smoke-тесты; CI должен ставить PyQt6 и зависимости рендереров.
+## 🎯 Текущее состояние
+
+- ✅ **TASK-001 (критические баги)** — коммит `79ae4e5`. Отчёт: [`session_2026-10-20_01_big_pickle.md`](file:///agents/history/session_2026-10-20_01_big_pickle.md).
+- ✅ **TASK-002 (PDF-движок)** — коммит `ffcbbe6`. Отчёт: [`session_2026-10-20_02_big_pickle.md`](file:///agents/history/session_2026-10-20_02_big_pickle.md).
+- ✅ **TASK-003 (чистка мёртвого кода)** — коммит `1db3a81`. Отчёт: [`session_2026-10-20_03_big_pickle.md`](file:///agents/history/session_2026-10-20_03_big_pickle.md).
+- ✅ **TASK-004 (хрупкие UI-механики)** — коммит `451bfc9`. Отчёт: [`session_2026-10-20_04_big_pickle.md`](file:///agents/history/session_2026-10-20_04_big_pickle.md).
+- ✅ **TASK-005 (тестовое покрытие ядра)** — коммит `bb9426e`. Отчёт: [`session_2026-10-20_05_big_pickle.md`](file:///agents/history/session_2026-10-20_05_big_pickle.md). Попутно исправлен [BUG_002](file:///agents/bugs_and_fixes/BUG_002_reveal_js_slide_split.md).
+- Тесты: **18/18** тестовых файлов зелёные.
+- ⚠️ Локальный PDF-рендер недоступен: pip-пакет `weasyprint` не устанавливается под Python 3.15 (нет колёс `brotli`); портативного `weasyprint.exe` нет. Нужен Python ≤3.14 или exe.
 
 ---
 
-## 📌 Пошаговый чек-лист выполнения:
+## 📌 Следующие действия
 
-- [ ] **Шаг 1:** Тесты рендереров (`test_renderers.py`, `test_reveal_exporter.py`, `test_multi_export.py`).
-- [ ] **Шаг 2:** Тесты сервисов (`test_plugin_system.py`, `test_github_sync.py`, `test_pdf_encrypt.py`, `test_ocr_engine.py`).
-- [ ] **Шаг 3:** GUI-smoke под Qt-стабом (`test_gui_stubs.py`).
-- [ ] **Шаг 4:** CI: PyQt6 + зависимости рендереров + матрица Python.
-- [ ] **Шаг 5:** Регистрация в `run_all.py`, `py_compile`, полный прогон.
-
----
-
-## 🧪 Критерии готовности (Definition of Done):
-1. 8 новых тестовых файлов написаны и зелёные.
-2. `tests/run_all.py` — все файлы PASS, старые 11 не сломаны.
-3. `.github/workflows/test.yml` ставит PyQt6 и зависимости рендереров.
-4. Ни один тест не требует сеть, WeasyPrint, tesseract или MS Word.
+1. Выбрать задачу из [`backlog.md`](file:///agents/tasks/backlog.md) — кандидаты:
+   - **TASK-006 (LOW):** дрейф версий `requirements.txt` ↔ `pyproject.toml`.
+   - **TASK-007 (LOW):** мелкие баги ядра (дублирующийся лог «saved», шэдоуинг `QThread.finished`, busy-wait в TTS, `<html lang="en">`).
+   - **TASK-008 (LOW):** судьба фичевых заглушек.
+2. Создать план: `python brain.py plan "Название"`.
+3. Перенести выбранный backlog-элемент в этот файл с чек-листом (Plan-First).

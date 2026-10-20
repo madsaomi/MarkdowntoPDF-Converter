@@ -17,7 +17,7 @@
 | **Ядро конвертации (`src/core/`)** | 🟡 Работает | 30 модулей; PDF-рендер: резолвер exe → pip-fallback (TASK-002 ✅); `watermark_css` проброшен в шаблон (TASK-004 ✅); движок локально не установлен |
 | **GUI (`src/gui/`, PyQt6)** | 🟡 Работает | ~35 инструментов, 17 диалогов, i18n RU/EN; есть критические баги (TASK-001) и мёртвый код (TASK-003) |
 | **CLI-режим (headless)** | 🟢 Готово | Работает без PyQt6; все форматы, шифрование, нумерация страниц |
-| **Тестирование и QA** | 🟡 В процессе | 7 файлов / ~60 assert-тестов проходят; рендереры, TTS/OCR, git-sync не покрыты (TASK-005) |
+| **Тестирование и QA** | 🟢 Хорошо | **18/18** тестовых файлов зелёные; покрыты рендереры (контракты), Reveal/multi-export/plugin_system/github_sync/pdf_encrypt, GUI-smoke |
 | **CI/CD** | 🟡 Частично | Один workflow (pytest на Ubuntu 3.10–3.13); сборки .exe и инсталлятора в CI нет |
 | **Сборка и дистрибуция** | 🟡 Частично | `build.py` (PyInstaller onefile) + `installer.iss` (Inno Setup); работает только при наличии `weasyprint-windows/dist/weasyprint.exe` |
 
@@ -26,8 +26,8 @@
 ---
 
 ## 🎯 Что делается прямо сейчас (Текущий фокус):
-- ✅ **TASK-004** — хрупкие UI-механики починены (2026-10-20, коммит `451bfc9`, план: [`plan_004_fix_brittle_ui.md`](file:///agents/plans/plan_004_fix_brittle_ui.md))
-- Следующая кандидатура: **TASK-005** — расширение тестового покрытия рендереров + PyQt6 в CI (см. [`backlog.md`](file:///agents/tasks/backlog.md))
+- ✅ **TASK-005** — тестовое покрытие ядра расширено до **18/18** зелёных (2026-10-20, коммит `bb9426e`, план: [`plan_005_test_coverage.md`](file:///agents/plans/plan_005_test_coverage.md))
+- Следующая кандидатура: **TASK-006** — синхронизация `requirements.txt` ↔ `pyproject.toml` (см. [`backlog.md`](file:///agents/tasks/backlog.md))
 
 ---
 
