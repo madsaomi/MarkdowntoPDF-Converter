@@ -56,6 +56,7 @@ test_files = [
     "test_dialogs_github_plugin.py",
     "test_calendar_view.py",
     "test_about_dialog.py",
+    "test_image_renderer.py",
 ]
 
 passed = 0
