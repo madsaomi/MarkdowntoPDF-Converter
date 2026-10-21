@@ -17,10 +17,10 @@
 | **Ядро конвертации (`src/core/`)** | 🟢 Готово | 30 модулей; PDF-рендер: резолвер exe → pip-fallback (TASK-002 ✅); `watermark_css` проброшен в шаблон (TASK-004 ✅); рендер проверен сквозным тестом с настоящим WeasyPrint (workflow E2E Export) |
 | **GUI (`src/gui/`, PyQt6)** | 🟢 Готово | ~35 инструментов, 17 диалогов, i18n RU/EN; God-object `MainWindow` декомпозирован в 5 миксинов (TASK-010 ✅), `dialogs.py` разбит на пакет `src/gui/dialogs/` (TASK-011 ✅), миксины разбиты (TASK-012 ✅); каждый модуль покрыт тестами |
 | **CLI-режим (headless)** | 🟢 Готово | Работает без PyQt6; все форматы, шифрование, нумерация страниц |
-| **Тестирование и QA** | 🟢 Готово | **52/52** тестовых файлов зелёные; **все 83 модуля `src/`** упомянуты тестами; покрытие строк **62 %** (было 42 %); поведенческие тесты миксинов, диалогов, рендереров, переводчика, wikilinks, файлового менеджера, холста для рисования, настоящего `MainWindow` |
+| **Тестирование и QA** | 🟢 Готово | **53/53** тестовых файлов зелёные; **все 83 модуля `src/`** упомянуты тестами; покрытие строк **64 %** (было 42 %); поведенческие тесты миксинов, диалогов, рендереров, переводчика, wikilinks, файлового менеджера, холста для рисования, настоящего `MainWindow` |
 | **Релиз (M4)** | 🟢 Готово | Релизный workflow по тегу `v*` (тесты → `.exe` → инсталлятор → GitHub Release), локальный `scripts/build_release.ps1`, README актуализирован (TASK-009 ✅) |
 | **Зависимости и окружение** | 🟢 Готово | `requirements.txt` ↔ `pyproject.toml` синхронизированы (TASK-006 ✅); тест сверки + «используется в коде → объявлено» |
-| **CI/CD** | 🟢 Готово | 5 workflow, **все зелёные**: Tests (3.10–3.14, offscreen Qt), GUI Smoke, Coverage (порог 55 %), E2E Export (настоящий WeasyPrint + PyMuPDF), Second Brain Integrity Check. Раньше job `Tests` был красным всегда — исправлено |
+| **CI/CD** | 🟢 Готово | 5 workflow, **все зелёные**: Tests (3.10–3.14, offscreen Qt), GUI Smoke, Coverage (порог 58 %), E2E Export (настоящий WeasyPrint + PyMuPDF), Second Brain Integrity Check. Раньше job `Tests` был красным всегда — исправлено |
 | **Сборка и дистрибуция** | 🟡 Частично | `build.py` (PyInstaller onefile) + `installer.iss` (Inno Setup); работает только при наличии `weasyprint-windows/dist/weasyprint.exe` |
 
 > *Обозначения статусов: 🟢 Готово | 🟡 В разработке / Требует внимания | 🔴 Заблокировано | ⚪ Не начато*
@@ -29,8 +29,8 @@
 
 ## 🎯 Что делается прямо сейчас (Текущий фокус):
 - ✅ **TASK-012** — декомпозиция `ToolMethodsMixin` и остальных миксинов завершена; каждый миксин покрыт поведенческими тестами (части 1–3: `test_mixins_behavior_012*.py`).
-- ✅ **Покрытие тестами завершено (PLAN-013)** — 52 тест-файла, **все 83 модуля `src/`** упомянуты тестами; покрытие строк **42 % → 62 %**; в CI появился workflow Coverage с порогом **55 %**; ни один модуль не остался на 0 %.
-- ✅ **CI полностью зелёный** — ранее job `Tests` падал на всех версиях Python с 2026-07-14. Найдено 4 реальных бага ([BUG_004](file:///agents/bugs_and_fixes/BUG_004_mixins_missing_globals.md), [BUG_005](file:///agents/bugs_and_fixes/BUG_005_mixin_tests_real_pyqt6.md), [BUG_006](file:///agents/bugs_and_fixes/BUG_006_toml_fallback_py310.md), [BUG_007](file:///agents/bugs_and_fixes/BUG_007_qdate_fromdatetime_pyside.md)) — включая полностью нерабочий «Календарь заметок».
+- ✅ **Покрытие тестами завершено (PLAN-013)** — 53 тест-файла, **все 83 модуля `src/`** упомянуты тестами; покрытие строк **42 % → 64 %**; в CI появился workflow Coverage с порогом **58 %**; ни один модуль не остался на 0 %.
+- ✅ **CI полностью зелёный** — ранее job `Tests` падал на всех версиях Python с 2026-07-14. Найдено **5 реальных багов**: [BUG_004](file:///agents/bugs_and_fixes/BUG_004_mixins_missing_globals.md), [BUG_005](file:///agents/bugs_and_fixes/BUG_005_mixin_tests_real_pyqt6.md), [BUG_006](file:///agents/bugs_and_fixes/BUG_006_toml_fallback_py310.md), [BUG_007](file:///agents/bugs_and_fixes/BUG_007_qdate_fromdatetime_pyside.md) (нерабочий «Календарь заметок»), [BUG_008](file:///agents/bugs_and_fixes/BUG_008_footer_css_injection.md) (**CSS-инъекция через колонтитул**).
 - ✅ **E2E-воркфлоу** — сквозная проверка экспорта с настоящим WeasyPrint + PyMuPDF (PDF → pypdf, PDF → PNG, multi_export по 5 форматам).
 - 🎉 Бэклог задач (TASK-001…013) закрыт.
 
