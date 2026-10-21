@@ -42,6 +42,7 @@ test_files = [
     "test_no_dangling_globals.py",
     "test_workers_render_013.py",
     "test_translator.py",
+    "test_gui_translator.py",
 ]
 
 passed = 0
