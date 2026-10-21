@@ -4,6 +4,7 @@
 ![PyQt6](https://img.shields.io/badge/GUI-PyQt6-green.svg)
 ![WeasyPrint](https://img.shields.io/badge/PDF_Engine-WeasyPrint-red.svg)
 ![Tests](https://github.com/madsaomi/MarkdowntoPDF-Converter/actions/workflows/test.yml/badge.svg)
+![E2E](https://github.com/madsaomi/MarkdowntoPDF-Converter/actions/workflows/e2e.yml/badge.svg)
 ![Release](https://github.com/madsaomi/MarkdowntoPDF-Converter/actions/workflows/release.yml/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
@@ -144,7 +145,7 @@ src/
     ├── preview_manager.py         # Live preview
     ├── document_tools.py          # Document utilities
     └── ...                        # Other GUI modules
-tests/                             # 46 test files (custom runner + pytest)
+tests/                             # 47 test files (custom runner + pytest)
 scripts/
 └── build_release.ps1              # Local release build (.exe + installer)
 ```
@@ -194,7 +195,7 @@ Workflow [`.github/workflows/release.yml`](.github/workflows/release.yml) сна
 ## Tests
 
 ```bash
-python tests/run_all.py           # custom runner (46 test files)
+python tests/run_all.py           # custom runner (47 test files)
 python -m pytest tests/ -q        # pytest
 ```
 

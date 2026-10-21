@@ -57,6 +57,7 @@ test_files = [
     "test_calendar_view.py",
     "test_about_dialog.py",
     "test_image_renderer.py",
+    "test_e2e_export.py",
 ]
 
 passed = 0
