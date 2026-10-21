@@ -38,6 +38,7 @@ test_files = [
     "test_decomposition_012.py",
     "test_mixins_behavior_012.py",
     "test_mixins_behavior_012b.py",
+    "test_mixins_behavior_012c.py",
     "test_no_dangling_globals.py",
     "test_workers_render_013.py",
 ]
