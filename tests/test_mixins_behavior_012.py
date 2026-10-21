@@ -16,6 +16,9 @@ import types
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
+# Реальному Qt для виджетов нужен дисплей; без GUI — offscreen (до импорта Qt).
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
 
 def _install_qt_stub():
     try:
@@ -86,6 +89,58 @@ def _install_qt_stub():
 
 
 STUB_ACTIVE = _install_qt_stub()
+
+
+class _NoopDialog:
+    """Заменяет QMessageBox/QFileDialog в модулях миксинов.
+
+    С настоящим PyQt6 вызовы вида ``QMessageBox.information(fake_host, ...)``
+    падают (fake_host — не QWidget), а модальные диалоги блокируют прогон.
+    Поэтому методы диалогов принудительно заменяются no-op в каждом модуле,
+    который импортирует соответствующий класс.
+    """
+
+    def __init__(self, returns=None):
+        self._returns = returns
+        self.calls = []
+
+    def _record(self, name, *args, **kwargs):
+        self.calls.append((name, args, kwargs))
+        if self._returns is not None:
+            return self._returns
+        return None
+
+    def __getattr__(self, name):
+        def _method(*args, **kwargs):
+            return self._record(name, *args, **kwargs)
+        return _method
+
+
+def _patch_msgbox(*module_names):
+    """Делает QMessageBox.* no-op в указанных модулях."""
+    import importlib
+    patched = []
+    for mod_name in module_names:
+        mod = importlib.import_module(mod_name)
+        if hasattr(mod, "QMessageBox"):
+            holder = _NoopDialog()
+            try:
+                mod.QMessageBox = holder
+                patched.append((mod, holder))
+            except Exception:
+                pass
+    return patched
+
+
+# Модули миксинов, где вызываются QMessageBox-методы с фейковым хостом.
+MSG_DIALOG_MODULES = (
+    "src.gui.mixins.export_tools",
+    "src.gui.mixins.editor_formatting",
+    "src.gui.mixins.workspace",
+    "src.gui.mixins.education",
+    "src.gui.mixins.view_dialogs",
+)
+_patch_msgbox(*MSG_DIALOG_MODULES)
 
 
 # ─── фейковый хост и вспомогательное ─────────────────────────────────────────

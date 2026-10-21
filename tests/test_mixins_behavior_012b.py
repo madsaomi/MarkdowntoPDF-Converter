@@ -15,6 +15,10 @@ import types
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
+# Реальному Qt для виджетов нужен дисплей; в CI и локально без GUI — offscreen.
+# Ставим до первого импорта Qt.
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
 
 def _install_qt_stub():
     try:
@@ -77,6 +81,57 @@ def _install_qt_stub():
 
 
 STUB_ACTIVE = _install_qt_stub()
+
+
+def _ensure_qapplication():
+    """Создаёт QApplication, если PyQt6 настоящий (виджеты без него крашат)."""
+    if STUB_ACTIVE:
+        return None
+    try:
+        from PyQt6.QtWidgets import QApplication
+        return QApplication.instance() or QApplication([])
+    except Exception:
+        return None
+
+
+_APP = _ensure_qapplication()
+
+
+class _NoopDialog:
+    """Заменяет статические методы диалогов Qt на no-op в модулях миксинов.
+
+    С настоящим PyQt6 ``QMessageBox.information(fake_host, ...)`` падает
+    (fake_host — не QWidget), а модальные диалоги блокируют прогон.
+    """
+
+    def __init__(self, returns=None):
+        self._returns = returns
+        self.calls = []
+
+    def __getattr__(self, name):
+        def _method(*args, **kwargs):
+            self.calls.append((name, args, kwargs))
+            return self._returns
+        return _method
+
+
+def _patch_dialogs(*module_names):
+    import importlib
+    for mod_name in module_names:
+        mod = importlib.import_module(mod_name)
+        for cls_name in ("QMessageBox", "QInputDialog", "QFileDialog"):
+            if hasattr(mod, cls_name):
+                setattr(mod, cls_name, _NoopDialog())
+
+
+_patch_dialogs(
+    "src.gui.mixins.export_history",
+    "src.gui.mixins.presets",
+    "src.gui.mixins.convert_tools",
+    "src.gui.mixins.integrations",
+    "src.gui.mixins.document_ops",
+    "src.gui.mixins.editor_tools",
+)
 
 
 # ─── общий фейковый хост ─────────────────────────────────────────────────────
