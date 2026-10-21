@@ -65,6 +65,9 @@ test_files = [
     "test_main_window.py",
     "test_coverage_render_ai.py",
     "test_coverage_document_tools.py",
+    "test_coverage_tts_engine.py",
+    "test_coverage_threads.py",
+    "test_coverage_sync_pptx.py",
 ]
 
 passed = 0

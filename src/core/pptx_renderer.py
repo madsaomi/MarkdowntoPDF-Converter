@@ -162,11 +162,17 @@ class PPTXRenderer:
 
         parser = _SlideParser()
         parser.feed(html_content)
+        parser.close()
+        # Сбросить содержимое, накопленное после последнего заголовка, иначе
+        # тело финального слайда теряется (BUG_009).
+        parser._flush_content()
+        parsed = parser.slides
 
-        for s in parser.slides:
-            slides.append(s)
-
-        if not parser.slides:
+        if any(s['title'] for s in parsed):
+            for s in parsed:
+                slides.append(s)
+        else:
+            # Заголовков нет — весь документ оформляется одним слайдом.
             body_clean = re.sub(r'<[^>]+>', ' ', html_content)
             body_clean = re.sub(r'\s+', ' ', body_clean).strip()
             lines = [l.strip() for l in body_clean.split('\n') if l.strip()]
