@@ -47,4 +47,4 @@ jobs:
 
       - name: Check coverage threshold
         # Порог = измеренный уровень минус запас на различия окружений.
-        run: python -m coverage report --fail-under=48
+        run: python -m coverage report --fail-under=55
