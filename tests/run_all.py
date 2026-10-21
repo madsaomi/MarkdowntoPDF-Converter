@@ -64,20 +64,37 @@ test_files = [
     "test_coverage_support.py",
     "test_main_window.py",
     "test_coverage_render_ai.py",
+    "test_coverage_document_tools.py",
 ]
 
 passed = 0
 failed = 0
+
+# Таймаут на один тест-файл. Нужен, чтобы зависший модальный диалог
+# (Qt exec()) не блокировал прогон на часы. Тесты обычно укладываются
+# в несколько секунд; 300 секунд — заведомо просторный предел.
+TEST_TIMEOUT = int(os.environ.get("TEST_TIMEOUT", "300"))
 
 for tf in test_files:
     path = os.path.join(test_dir, tf)
     print(f"\n{'='*60}")
     print(f"Running: {tf}")
     print(f"{'='*60}")
-    result = subprocess.run(
-        [sys.executable, path],
-        capture_output=True, text=True, cwd=os.path.dirname(test_dir)
-    )
+    try:
+        result = subprocess.run(
+            [sys.executable, path],
+            capture_output=True, text=True, cwd=os.path.dirname(test_dir),
+            timeout=TEST_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired as e:
+        failed += 1
+        print(f"  RESULT: FAIL (timeout {TEST_TIMEOUT}s)")
+        out = e.stdout or ""
+        if isinstance(out, bytes):
+            out = out.decode("utf-8", errors="replace")
+        if out:
+            print(out)
+        continue
     print(result.stdout)
     if result.stderr:
         print(result.stderr)
