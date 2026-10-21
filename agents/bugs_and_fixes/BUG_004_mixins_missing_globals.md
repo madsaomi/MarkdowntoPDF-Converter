@@ -20,7 +20,7 @@
   перенесены**. Методы ссылаются на:
   - `json`, `QInputDialog`, `QMessageBox` (`presets.py`);
   - `QInputDialog`, `document_tools`, `file_manager` (`document_ops.py`);
-  - `QMessageBox`, `QRegularExpression` (`editor_tools.py`).
+  - `QMessageBox`, `QRegularExpression`, `TRANSLATIONS` (`editor_tools.py`).
 
   В старом `main_window.py` эти имена были доступны как глобали модуля
   (`import json`, импорты Qt, `from src.gui import ... document_tools, file_manager`).
@@ -30,7 +30,9 @@
   (`tests/test_mixins_behavior_012b.py`) — вызов `delete_preset()` дал
   `NameError: name 'json' is not defined`. Дополнительно написан сканер
   (AST: «имена, использованные как базис атрибута, но не импортированные и не
-  локальные»), который нашёл **все три** модуля.
+  локальные»), который нашёл **все три** модуля. Сканер доведён до полноценной
+  проверки батареи — `tests/test_no_dangling_globals.py` (анализ 83 файлов `src/`),
+  он же дополнительно поймал `TRANSLATIONS` в `editor_tools.py`.
 
 ## Исправление
 
@@ -48,10 +50,11 @@ from src.gui import document_tools, file_manager
 # editor_tools.py
 from PyQt6.QtCore import QRegularExpression
 from PyQt6.QtWidgets import QMessageBox
+from src.gui.translations import TRANSLATIONS
 ```
 
-Проверено: сканер «висячих» глобалов по `src/gui/mixins/` — чисто; новые
-поведенческие тесты зелёные; батарея 28/28.
+Проверено: постоянный тест `tests/test_no_dangling_globals.py` (сканер по
+всему `src/`) — чисто; новые поведенческие тесты зелёные; батарея 29/29.
 
 ## Уроки
 - Декомпозиция «вербатим» переносит тела, но **не** неявные зависимости от
