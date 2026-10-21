@@ -58,6 +58,8 @@ test_files = [
     "test_about_dialog.py",
     "test_image_renderer.py",
     "test_e2e_export.py",
+    "test_coverage_core.py",
+    "test_coverage_mixins.py",
 ]
 
 passed = 0
