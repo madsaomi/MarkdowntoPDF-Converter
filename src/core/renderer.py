@@ -82,7 +82,7 @@ class PDFRenderer:
             custom_css=custom_css,
             paper_size=paper_size,
             watermark=safe_watermark,
-            footer_text=resolved_footer,
+            footer_text=safe_footer,
             margins=margins,
             page_numbers=page_numbers,
             page_num_format=page_num_format,

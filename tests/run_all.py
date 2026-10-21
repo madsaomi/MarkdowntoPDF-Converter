@@ -63,6 +63,7 @@ test_files = [
     "test_coverage_mixins2.py",
     "test_coverage_support.py",
     "test_main_window.py",
+    "test_coverage_render_ai.py",
 ]
 
 passed = 0
