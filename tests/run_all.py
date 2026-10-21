@@ -43,6 +43,7 @@ test_files = [
     "test_workers_render_013.py",
     "test_translator.py",
     "test_gui_translator.py",
+    "test_highlighter.py",
 ]
 
 passed = 0
