@@ -89,35 +89,58 @@ def _load_pyproject() -> dict:
         with open(PYPROJECT, "rb") as f:
             return tomllib.load(f)["project"]
 
-    # Fallback для Python 3.10: извлекаем строковые значения из массивов
+    # Fallback для Python 3.10: извлекаем строковые значения из массивов,
+    # в том числе многострочных (dependencies = [ ... ]).
     with open(PYPROJECT, encoding="utf-8") as f:
         text = f.read()
     project: dict = {"dependencies": [], "optional-dependencies": {}}
     section = None
     current_extra = None
+    array_key = None  # ключ массива, который сейчас читаем (многострочный)
     for raw in text.splitlines():
         line = raw.strip()
-        if line.startswith("[project.optional-dependencies]"):
-            section = "extras"
+        if array_key is None:
+            # Вне массива: смена секции
+            if line.startswith("[project.optional-dependencies]"):
+                section = "extras"
+                continue
+            if line.startswith("[project]"):
+                section = "project"
+                continue
+            if line.startswith("[") and not line.startswith("[project"):
+                section = None
+                continue
+            if line.startswith("name") and section == "project":
+                project["name"] = line.split("=", 1)[1].strip().strip('"')
+            # Старт массива:  key = [ ...   (может закрыться на этой же строке)
+            m = re.match(r"^([A-Za-z0-9_.-]+)\s*=\s*\[(.*)$", line)
+            if m:
+                array_key = m.group(1)
+                if section == "extras":
+                    current_extra = array_key
+                    project["optional-dependencies"].setdefault(current_extra, [])
+                rest = m.group(2)
+                _collect_array_items(rest, section, current_extra, project)
+                if "]" in rest:
+                    array_key = None
+                    current_extra = None
+                continue
             continue
-        if line.startswith("[project]"):
-            section = "project"
-            continue
-        if line.startswith("[") and not line.startswith("[project"):
-            section = None
-            continue
-        if line.startswith("name") and section == "project":
-            project["name"] = line.split("=", 1)[1].strip().strip('"')
-        m = re.match(r"^([A-Za-z0-9_-]+)\s*=\s*\[(.*)\]?$", line)
-        if m and section == "extras":
-            current_extra = m.group(1)
-            project["optional-dependencies"].setdefault(current_extra, [])
-        for item in re.findall(r'"([^"]+)"', line):
-            if section == "project" and line.startswith("dependencies"):
-                project["dependencies"].append(item)
-            elif section == "extras" and current_extra:
-                project["optional-dependencies"].setdefault(current_extra, []).append(item)
+        # Внутри массива: собираем элементы до закрывающей ]
+        _collect_array_items(line, section, current_extra, project)
+        if "]" in line:
+            array_key = None
+            current_extra = None
     return project
+
+
+def _collect_array_items(fragment: str, section, current_extra, project) -> None:
+    """Добавляет строковые элементы из фрагмента строки массива в project."""
+    for item in re.findall(r'"([^"]+)"', fragment):
+        if section == "project" and not current_extra:
+            project["dependencies"].append(item)
+        elif section == "extras" and current_extra:
+            project["optional-dependencies"].setdefault(current_extra, []).append(item)
 
 
 def collect_imports() -> set:
@@ -217,9 +240,32 @@ def test_pyproject_parses():
     print("[PASS] test_pyproject_parses")
 
 
+def test_pyproject_fallback_parser_py310():
+    """Резервный парсер (без tomllib, py3.10) читает многострочные массивы.
+
+    Регрессия CI: на Python 3.10 tomllib недоступен, и старый построчный
+    парсер не видел многострочный dependencies = [ ... ] → 0 базовых
+    зависимостей → падение test_dependency_sync. Проверяем оба пути.
+    """
+    saved = globals().get("tomllib")
+    try:
+        globals()["tomllib"] = None
+        project = _load_pyproject()
+        deps = {_norm(d) for d in project["dependencies"]}
+        assert "markdown" in deps, f"fallback не собрал dependencies: {deps}"
+        assert "pypdf" in deps, f"fallback не собрал dependencies: {deps}"
+        extras = project.get("optional-dependencies", {})
+        assert extras.get("gui") == ["PyQt6>=6.5.0"], extras.get("gui")
+        assert "python-docx>=1.1" in extras.get("docx", []), extras.get("docx")
+    finally:
+        globals()["tomllib"] = saved
+    print("[PASS] test_pyproject_fallback_parser_py310")
+
+
 def main():
     tests = [
         test_pyproject_parses,
+        test_pyproject_fallback_parser_py310,
         test_requirements_and_pyproject_agree,
         test_speech_recognition_declared,
         test_used_imports_are_declared,
