@@ -52,6 +52,8 @@ test_files = [
     "test_dialogs_versions.py",
     "test_dialogs_common.py",
     "test_dialogs_analysis.py",
+    "test_excalidraw_canvas.py",
+    "test_dialogs_github_plugin.py",
 ]
 
 passed = 0
