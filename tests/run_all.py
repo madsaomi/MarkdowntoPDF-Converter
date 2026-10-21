@@ -45,6 +45,7 @@ test_files = [
     "test_gui_translator.py",
     "test_highlighter.py",
     "test_wikilinks_behavior.py",
+    "test_file_manager.py",
 ]
 
 passed = 0
