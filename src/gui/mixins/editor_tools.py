@@ -6,6 +6,8 @@
 from PyQt6.QtCore import QRegularExpression
 from PyQt6.QtWidgets import QMessageBox
 
+from src.gui.translations import TRANSLATIONS
+
 
 class EditorToolsMixin:
     """Миксин MainWindow. См. src/gui/mixins/__init__.py."""
