@@ -60,6 +60,7 @@ test_files = [
     "test_e2e_export.py",
     "test_coverage_core.py",
     "test_coverage_mixins.py",
+    "test_coverage_mixins2.py",
 ]
 
 passed = 0
