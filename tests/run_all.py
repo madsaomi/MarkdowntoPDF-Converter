@@ -37,6 +37,7 @@ test_files = [
     "test_dialogs_package_011.py",
     "test_decomposition_012.py",
     "test_mixins_behavior_012.py",
+    "test_mixins_behavior_012b.py",
     "test_workers_render_013.py",
 ]
 

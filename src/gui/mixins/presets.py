@@ -3,6 +3,10 @@
 Перенос вербатим — тела методов не изменены.
 """
 
+import json
+
+from PyQt6.QtWidgets import QInputDialog, QMessageBox
+
 
 class PresetsMixin:
     """Миксин MainWindow. См. src/gui/mixins/__init__.py."""

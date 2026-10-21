@@ -3,6 +3,9 @@
 Перенос вербатим — тела методов не изменены.
 """
 
+from PyQt6.QtCore import QRegularExpression
+from PyQt6.QtWidgets import QMessageBox
+
 
 class EditorToolsMixin:
     """Миксин MainWindow. См. src/gui/mixins/__init__.py."""

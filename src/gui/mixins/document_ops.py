@@ -3,6 +3,10 @@
 Перенос вербатим — тела методов не изменены.
 """
 
+from PyQt6.QtWidgets import QInputDialog
+
+from src.gui import document_tools, file_manager
+
 
 class DocumentOpsMixin:
     """Миксин MainWindow. См. src/gui/mixins/__init__.py."""

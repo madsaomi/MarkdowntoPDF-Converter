@@ -144,7 +144,7 @@ src/
     ├── preview_manager.py         # Live preview
     ├── document_tools.py          # Document utilities
     └── ...                        # Other GUI modules
-tests/                             # 27 test files (custom runner + pytest)
+tests/                             # 28 test files (custom runner + pytest)
 scripts/
 └── build_release.ps1              # Local release build (.exe + installer)
 ```
@@ -194,7 +194,7 @@ Workflow [`.github/workflows/release.yml`](.github/workflows/release.yml) сна
 ## Tests
 
 ```bash
-python tests/run_all.py           # custom runner (27 test files)
+python tests/run_all.py           # custom runner (28 test files)
 python -m pytest tests/ -q        # pytest
 ```
 
