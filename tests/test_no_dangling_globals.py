@@ -188,18 +188,29 @@ def find_dangling_names(path):
 
 
 def _iter_source_files():
-    for root, dirs, files in os.walk(os.path.join(ROOT, "src")):
-        dirs[:] = [d for d in dirs if d != "__pycache__"]
-        for fn in files:
-            if fn.endswith(".py"):
-                yield os.path.join(root, fn)
+    """Все .py проекта: src/, scripts/, tests/ и корневые модули."""
+    roots = ["src", "scripts", "tests"]
+    for name in roots:
+        base = os.path.join(ROOT, name)
+        if not os.path.isdir(base):
+            continue
+        for root, dirs, files in os.walk(base):
+            dirs[:] = [d for d in dirs if d != "__pycache__"]
+            for fn in files:
+                if fn.endswith(".py"):
+                    yield os.path.join(root, fn)
+    for fn in os.listdir(ROOT):
+        p = os.path.join(ROOT, fn)
+        if fn.endswith(".py") and os.path.isfile(p):
+            yield p
 
 
-def test_no_dangling_globals_in_src_and_scripts():
-    """Ни один модуль src/ не использует неопределённые имена."""
+def test_no_dangling_globals_in_project():
+    """Ни один модуль проекта (src/, scripts/, tests/, корень) не использует
+    неопределённые имена."""
     problems = []
     checked = 0
-    for path in sorted(_iter_source_files()):
+    for path in sorted(set(_iter_source_files())):
         checked += 1
         for name, lineno in find_dangling_names(path):
             rel = os.path.relpath(path, ROOT)
@@ -208,7 +219,7 @@ def test_no_dangling_globals_in_src_and_scripts():
         "Найдены «висячие» имена (использованы, но не импортированы/не определены):\n  "
         + "\n  ".join(problems)
     )
-    print(f"[PASS] test_no_dangling_globals_in_src_and_scripts ({checked} файлов)")
+    print(f"[PASS] test_no_dangling_globals_in_project ({checked} файлов)")
 
 
 def test_scanner_detects_known_pattern():
@@ -264,7 +275,7 @@ def main():
     tests = [
         test_scanner_detects_known_pattern,
         test_scanner_understands_function_locals,
-        test_no_dangling_globals_in_src_and_scripts,
+        test_no_dangling_globals_in_project,
     ]
     for t in tests:
         t()
