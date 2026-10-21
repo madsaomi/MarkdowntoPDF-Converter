@@ -49,6 +49,9 @@ test_files = [
     "test_editor_commands.py",
     "test_preview_manager.py",
     "test_templates_data.py",
+    "test_dialogs_versions.py",
+    "test_dialogs_common.py",
+    "test_dialogs_analysis.py",
 ]
 
 passed = 0
