@@ -46,6 +46,8 @@ test_files = [
     "test_highlighter.py",
     "test_wikilinks_behavior.py",
     "test_file_manager.py",
+    "test_editor_commands.py",
+    "test_preview_manager.py",
 ]
 
 passed = 0
