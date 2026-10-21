@@ -48,6 +48,7 @@ test_files = [
     "test_file_manager.py",
     "test_editor_commands.py",
     "test_preview_manager.py",
+    "test_templates_data.py",
 ]
 
 passed = 0
