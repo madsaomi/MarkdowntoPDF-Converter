@@ -163,11 +163,12 @@ class WelcomeTourDialog(QDialog):
         layout.addWidget(card)
 
         self._current = 0
+        self._update_ui()
 
     def _update_ui(self):
         self.stack.setCurrentIndex(self._current)
         for i, dot in enumerate(self.dots):
-            color = "#8b59b6" if i == self._current else "#4a4a6a"
+            color = "#8b5cf6" if i == self._current else "#4a4a6a"
             dot.setStyleSheet(f"color: {color}; font-size: 10px; background: transparent; border: none;")
         self.btn_prev.setVisible(self._current > 0)
         is_last = self._current == len(self.STEPS) - 1

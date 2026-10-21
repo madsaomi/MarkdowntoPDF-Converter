@@ -68,6 +68,10 @@ test_files = [
     "test_coverage_tts_engine.py",
     "test_coverage_threads.py",
     "test_coverage_sync_pptx.py",
+    "test_coverage_pomodoro_tour.py",
+    "test_coverage_csv_editor.py",
+    "test_coverage_dialogs_export.py",
+    "test_coverage_dialogs_content.py",
 ]
 
 passed = 0

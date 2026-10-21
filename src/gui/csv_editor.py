@@ -91,8 +91,13 @@ class CSVEditorDialog(QDialog):
             if "|" in line and line.count("|") > line.count(","):
                 return "|"
             return ","
-        mapping = {"Comma (,)": ",", "\t": "Tab", ";": "Semicolon (;)", "|": "Pipe (|)"}
-        return delim
+        mapping = {
+            "Comma (,)": ",",
+            "Tab": "\t",
+            "Semicolon (;)": ";",
+            "Pipe (|)": "|",
+        }
+        return mapping.get(delim, ",")
 
     def import_csv(self):
         path, _ = QFileDialog.getOpenFileName(self, "Import CSV", "", "CSV (*.csv *.tsv *.txt)")
@@ -122,19 +127,21 @@ class CSVEditorDialog(QDialog):
 
     def _load_rows(self, rows: list[list[str]]):
         self._loading = True
-        self.table.clearContents()
-        if not rows:
-            return
-        headers = rows[0]
-        data = rows[1:]
-        self.table.setColumnCount(len(headers))
-        self.table.setRowCount(len(data))
-        self.table.setHorizontalHeaderLabels(headers)
-        for r, row in enumerate(data):
-            for c, val in enumerate(row):
-                if c < len(headers):
-                    self.table.setItem(r, c, QTableWidgetItem(val))
-        self._loading = False
+        try:
+            self.table.clearContents()
+            if not rows:
+                return
+            headers = rows[0]
+            data = rows[1:]
+            self.table.setColumnCount(len(headers))
+            self.table.setRowCount(len(data))
+            self.table.setHorizontalHeaderLabels(headers)
+            for r, row in enumerate(data):
+                for c, val in enumerate(row):
+                    if c < len(headers):
+                        self.table.setItem(r, c, QTableWidgetItem(val))
+        finally:
+            self._loading = False
 
     def _on_cell_changed(self, row, col):
         if not self._loading:
