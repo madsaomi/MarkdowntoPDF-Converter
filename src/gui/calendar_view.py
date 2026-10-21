@@ -85,7 +85,9 @@ class CalendarNotesDialog(QDialog):
                     continue
                 fpath = os.path.join(root, fname)
                 mtime = os.path.getmtime(fpath)
-                date = QDate.fromDateTime(datetime.fromtimestamp(mtime))
+                # QDate.fromDateTime() в PyQt6 не существует — берём дату
+                # из объекта datetime через конструктор QDate(date).
+                date = QDate(datetime.fromtimestamp(mtime).date())
                 if date not in self._file_dates:
                     self._file_dates[date] = []
                 self._file_dates[date].append(fpath)
