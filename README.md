@@ -4,6 +4,7 @@
 ![PyQt6](https://img.shields.io/badge/GUI-PyQt6-green.svg)
 ![WeasyPrint](https://img.shields.io/badge/PDF_Engine-WeasyPrint-red.svg)
 ![Tests](https://github.com/madsaomi/MarkdowntoPDF-Converter/actions/workflows/test.yml/badge.svg)
+![Coverage](https://github.com/madsaomi/MarkdowntoPDF-Converter/actions/workflows/coverage.yml/badge.svg)
 ![E2E](https://github.com/madsaomi/MarkdowntoPDF-Converter/actions/workflows/e2e.yml/badge.svg)
 ![Release](https://github.com/madsaomi/MarkdowntoPDF-Converter/actions/workflows/release.yml/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
@@ -197,6 +198,15 @@ Workflow [`.github/workflows/release.yml`](.github/workflows/release.yml) сна
 ```bash
 python tests/run_all.py           # custom runner (51 test files)
 python -m pytest tests/ -q        # pytest
+```
+
+Покрытие кода (`src/`) измеряется в CI — workflow
+[`.github/workflows/coverage.yml`](.github/workflows/coverage.yml) с порогом
+**48 %** (фактически ~53 %):
+
+```bash
+python -m coverage run --source=src --omit="src/__version__.py" -m pytest tests/ -q
+python -m coverage report --show-missing
 ```
 
 ## Requirements
