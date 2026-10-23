@@ -72,6 +72,8 @@ test_files = [
     "test_coverage_csv_editor.py",
     "test_coverage_dialogs_export.py",
     "test_coverage_dialogs_content.py",
+    "test_coverage_file_manager.py",
+    "test_coverage_core_small.py",
 ]
 
 passed = 0

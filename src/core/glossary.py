@@ -16,8 +16,10 @@ def extract_definitions(text: str) -> list[dict]:
     definitions = []
 
     patterns = [
-        re.compile(r'^\*\*(.+?)\*\*[:\-—]\s*(.+)$', re.MULTILINE),
-        re.compile(r'^\*\*(.+?)\*\*\s*:\s*(.+)$', re.MULTILINE),
+        # Разделитель может быть отделён пробелами/табами: `**Term** — Definition`
+        # (длинное тире в русской типографике всегда с пробелами).
+        re.compile(r'^\*\*(.+?)\*\*[ \t]*[:\-—][ \t]*(.+)$', re.MULTILINE),
+        re.compile(r'^\*\*(.+?)\*\*[ \t]*:[ \t]*(.+)$', re.MULTILINE),
     ]
 
     seen = set()

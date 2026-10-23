@@ -146,7 +146,7 @@ src/
     ├── preview_manager.py         # Live preview
     ├── document_tools.py          # Document utilities
     └── ...                        # Other GUI modules
-tests/                             # 61 test files (custom runner + pytest)
+tests/                             # 63 test files (custom runner + pytest)
 scripts/
 └── build_release.ps1              # Local release build (.exe + installer)
 ```
@@ -196,13 +196,13 @@ Workflow [`.github/workflows/release.yml`](.github/workflows/release.yml) сна
 ## Tests
 
 ```bash
-python tests/run_all.py           # custom runner (61 test files)
+python tests/run_all.py           # custom runner (63 test files)
 python -m pytest tests/ -q        # pytest
 ```
 
 Покрытие кода (`src/`) измеряется в CI — workflow
 [`.github/workflows/coverage.yml`](.github/workflows/coverage.yml) с порогом
-**76 %** (фактически ~81 %):
+**79 %** (фактически ~84 %):
 
 ```bash
 python -m coverage run --source=src --omit="src/__version__.py" -m pytest tests/ -q

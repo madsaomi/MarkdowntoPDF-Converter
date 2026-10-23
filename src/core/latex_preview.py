@@ -53,7 +53,10 @@ def render_latex_in_html(text: str) -> str:
     result = text
     offset = 0
 
-    for start, end, formula in expressions:
+    # BUG_013: find_latex_expressions отдаёт сначала все блочные формулы, затем
+    # инлайновые, поэтому смещения нельзя применять в исходном порядке —
+    # замены должны идти слева направо.
+    for start, end, formula in sorted(expressions, key=lambda e: e[0]):
         url = latex_to_url(formula)
         img_tag = f'<img src="{url}" alt="{formula}" style="vertical-align: middle;" />'
         result = result[:start + offset] + img_tag + result[end + offset:]
