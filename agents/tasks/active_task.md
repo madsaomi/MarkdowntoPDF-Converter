@@ -3,7 +3,7 @@
 **Статус:** ⚪ IDLE  
 **Дата обновления:** 2026-10-21  
 **Исполнитель:** Big Pickle (OpenCode)  
-**Последняя завершённая задача:** PLAN-013 — покрытие кода `src/` поднято с 42 % до 81 % (порог CI 76 %)  
+**Последняя завершённая задача:** PLAN-013 — покрытие кода `src/` поднято с 42 % до 84 % (порог CI 79 %)  
 
 ---
 
@@ -35,13 +35,13 @@
 - ✅ **TASK-010 (декомпозиция God-object MainWindow)** — коммит `d95c394`. Отчёт: [`session_2026-10-20_10_big_pickle.md`](file:///agents/history/session_2026-10-20_10_big_pickle.md).
 - ✅ **TASK-011 (разбиение `dialogs.py` на пакет)** — коммиты `7b00c6c` + `8e929c6`. Отчёт: [`session_2026-10-20_11_big_pickle.md`](file:///agents/history/session_2026-10-20_11_big_pickle.md).
 - ✅ **TASK-012 (декомпозиция миксинов)** — отчёты: [`session_2026-10-21_40…42_big_pickle.md`](file:///agents/history/session_2026-10-21_42_big_pickle.md).
-- ✅ **PLAN-013 (покрытие кода)** — 42 % → **81 %**, порог CI **76 %**, 61 тест-файл, 8 найденных багов. Отчёты: [`session_2026-10-21_43_big_pickle.md`](file:///agents/history/session_2026-10-21_43_big_pickle.md), [`session_2026-10-21_44_big_pickle.md`](file:///agents/history/session_2026-10-21_44_big_pickle.md).
+- ✅ **PLAN-013 (покрытие кода)** — 42 % → **84 %**, порог CI **79 %**, 63 тест-файла, 10 найденных багов. Отчёты: [`session_2026-10-21_43_big_pickle.md`](file:///agents/history/session_2026-10-21_43_big_pickle.md), [`session_2026-10-21_44_big_pickle.md`](file:///agents/history/session_2026-10-21_44_big_pickle.md), [`session_2026-10-23_45_big_pickle.md`](file:///agents/history/session_2026-10-23_45_big_pickle.md).
 
 ---
 
 ## 🧪 Состояние верификации
 
-- Тесты: **61/61** тестовых файлов зелёные (`python tests/run_all.py`); `pytest` — 729 passed.
-- Покрытие `src/`: **81 %** (порог CI 76 %).
+- Тесты: **63/63** тестовых файлов зелёные (`python tests/run_all.py`); `pytest` — 791 passed.
+- Покрытие `src/`: **84 %** (порог CI 79 %).
 - Integrity-check «Второго Мозга»: 0 ошибок.
 - **Бэклог TASK-001…013 и веха M4 закрыты.**
